@@ -1,0 +1,6 @@
+<Solution>
+	<Folder Name="/packages/">
+		<Project Path="packages/StoryblokDotNet.ContentDeliveryApi.Tests/StoryblokDotNet.ContentDeliveryApi.Tests.csproj" />
+		<Project Path="packages/StoryblokDotNet.ContentDeliveryApi/StoryblokDotNet.ContentDeliveryApi.csproj" />
+	</Folder>
+</Solution>
