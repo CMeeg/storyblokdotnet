@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Tests;
 
@@ -165,6 +164,30 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
 			() => serviceProvider.GetRequiredKeyedService<StoryblokContentDeliveryApiClient>(StoryblokRegion.Us));
 
-		Assert.Contains("No Storyblok client configuration was supplied for region 'Us'.", exception.Message);
+		Assert.Contains("No Storyblok client configuration was supplied for region 'Us'.", exception.Message, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void AddStoryblokContentDeliveryApi_CalledTwice_DoesNotDuplicateCoreRegistrations()
+	{
+		ServiceCollection services = new();
+
+		services.AddStoryblokContentDeliveryApi();
+		services.AddStoryblokContentDeliveryApi();
+
+		int factoryRegistrations = services.Count(serviceDescriptor => serviceDescriptor.ServiceType == typeof(StoryblokContentDeliveryHttpClientFactory));
+		int unkeyedApiClientRegistrations = services.Count(serviceDescriptor =>
+			serviceDescriptor.ServiceType == typeof(StoryblokContentDeliveryApiClient)
+			&& serviceDescriptor.ServiceKey is null);
+		int keyedApiClientRegistrations = services.Count(serviceDescriptor =>
+			serviceDescriptor.ServiceType == typeof(StoryblokContentDeliveryApiClient)
+			&& serviceDescriptor.ServiceKey is StoryblokRegion);
+		int apiOptionsValidatorRegistrations = services.Count(serviceDescriptor =>
+			serviceDescriptor.ServiceType == typeof(IValidateOptions<StoryblokContentDeliveryApiOptions>));
+
+		Assert.Equal(1, factoryRegistrations);
+		Assert.Equal(1, unkeyedApiClientRegistrations);
+		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.Regions.Count, keyedApiClientRegistrations);
+		Assert.Equal(1, apiOptionsValidatorRegistrations);
 	}
 }

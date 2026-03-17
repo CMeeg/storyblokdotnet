@@ -12,7 +12,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 
 		Assert.Equal(StoryblokRegion.Eu, client.Options.Region);
 		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu), client.BaseAddress);
-		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.GetClientName(StoryblokRegion.Eu), Assert.Single(httpClientFactory.ClientNames));
+		Assert.Equal(string.Empty, Assert.Single(httpClientFactory.ClientNames));
 	}
 
 	[Fact]
@@ -29,7 +29,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 
 		Assert.Equal(StoryblokRegion.Us, client.Options.Region);
 		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Us), client.BaseAddress);
-		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.GetClientName(StoryblokRegion.Us), Assert.Single(httpClientFactory.ClientNames));
+		Assert.Equal(string.Empty, Assert.Single(httpClientFactory.ClientNames));
 	}
 
 	[Fact]
@@ -50,7 +50,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 		StoryblokContentDeliveryHttpClient second = sut.Create(secondOptions);
 
 		Assert.Same(first, second);
-		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.GetClientName(StoryblokRegion.Canada), Assert.Single(httpClientFactory.ClientNames));
+		Assert.Equal(string.Empty, Assert.Single(httpClientFactory.ClientNames));
 	}
 
 	[Fact]
@@ -68,26 +68,12 @@ public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 		Assert.NotSame(euClient, australiaClient);
 		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Australia), australiaClient.BaseAddress);
 		Assert.Equal(2, httpClientFactory.ClientNames.Count);
-		Assert.Contains(StoryblokContentDeliveryHttpClientFactory.GetClientName(StoryblokRegion.Eu), httpClientFactory.ClientNames);
-		Assert.Contains(StoryblokContentDeliveryHttpClientFactory.GetClientName(StoryblokRegion.Australia), httpClientFactory.ClientNames);
+		Assert.All(httpClientFactory.ClientNames, static clientName => Assert.Equal(string.Empty, clientName));
 	}
 
 	[Fact]
 	public void Constructor_WithoutHttpClientFactory_ThrowsArgumentNullException()
 	{
 		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryHttpClientFactory(null!));
-	}
-
-	private sealed class RecordingHttpClientFactory : IHttpClientFactory
-	{
-		private readonly List<string> clientNames = new();
-
-		public List<string> ClientNames => clientNames;
-
-		public HttpClient CreateClient(string name)
-		{
-			clientNames.Add(name);
-			return new HttpClient();
-		}
 	}
 }

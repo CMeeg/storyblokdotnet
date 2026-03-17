@@ -12,7 +12,6 @@
 ## Build and Test
 
 * Primary solution build command: `dotnet build StoryblokDotNet.slnx`
-* Package-only build command: `dotnet build packages/StoryblokDotNet.ContentDeliveryApi/StoryblokDotNet.ContentDeliveryApi.csproj`
 * Test command: `dotnet test`
 * App host run command: `dotnet run --project apphost.cs`
 * When adding tests, place xUnit v3 test classes under `packages/StoryblokDotNet.ContentDeliveryApi.Tests` with public test classes and `[Fact]` or `[Theory]` methods so `dotnet test` can discover them.
@@ -26,7 +25,6 @@
 
 ## Conventions
 
-* The repo is pinned to .NET SDK `10.0.104` with `rollForward` `latestFeature` via `global.json`.
 * New NuGet dependencies should be added with central package management in `Directory.Packages.props`.
 * Preserve existing folder boundaries: package code in `packages/StoryblokDotNet.ContentDeliveryApi` and tests in `packages/StoryblokDotNet.ContentDeliveryApi.Tests`.
 * Organize tests by system under test: keep each production type's tests in a dedicated file (for example, `StoryblokContentDeliveryHttpClientFactoryTests.cs` and `StoryblokContentDeliveryServiceCollectionExtensionsTests.cs`) instead of combining unrelated test groups in one file.

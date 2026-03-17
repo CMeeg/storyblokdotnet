@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace StoryblokDotNet.ContentDeliveryApi;
@@ -99,26 +100,20 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 
 	private static IServiceCollection AddStoryblokContentDeliveryApiCore(IServiceCollection services)
 	{
+		if (services.Any(static serviceDescriptor => serviceDescriptor.ServiceType == typeof(StoryblokContentDeliveryApiRegistrationMarker)))
+		{
+			return services;
+		}
+
 		services
 			.AddOptions<StoryblokContentDeliveryApiOptions>()
-			.Validate(
-				static options => options.Clients.Count > 0,
-				$"{nameof(StoryblokContentDeliveryApiOptions.Clients)} must include at least one client configuration.")
-			.Validate(
-				static options => options.Clients.All(client => Enum.IsDefined(client.Region)),
-				$"{nameof(StoryblokContentDeliveryHttpClientOptions.Region)} must be a valid {nameof(StoryblokRegion)} value.")
-			.Validate(
-				static options =>
-				{
-					HashSet<StoryblokRegion> configuredRegions = [];
-					return options.Clients.All(client => configuredRegions.Add(client.Region));
-				},
-				$"{nameof(StoryblokContentDeliveryApiOptions.Clients)} can include at most one configuration per {nameof(StoryblokRegion)} value.")
 			.ValidateOnStart();
+
+		services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<StoryblokContentDeliveryApiOptions>, StoryblokContentDeliveryApiOptionsValidator>());
 
 		services.AddStoryblokContentDeliveryHttpClientFactory();
 
-		services.AddSingleton(serviceProvider =>
+		services.TryAddSingleton(serviceProvider =>
 		{
 			StoryblokContentDeliveryHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<StoryblokContentDeliveryHttpClientFactory>();
 			StoryblokContentDeliveryApiOptions options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
@@ -148,22 +143,49 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 				});
 		}
 
+		services.AddSingleton<StoryblokContentDeliveryApiRegistrationMarker>();
+
 		return services;
 	}
 
 	private static IServiceCollection AddStoryblokContentDeliveryHttpClientFactory(this IServiceCollection services)
 	{
-		ArgumentNullException.ThrowIfNull(services);
+		services.AddHttpClient();
 
-		foreach (StoryblokRegion region in StoryblokContentDeliveryHttpClientFactory.Regions)
-		{
-			services.AddHttpClient(
-				StoryblokContentDeliveryHttpClientFactory.GetClientName(region),
-				client => client.BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(region));
-		}
-
-		services.AddSingleton<StoryblokContentDeliveryHttpClientFactory>();
+		services.TryAddSingleton<StoryblokContentDeliveryHttpClientFactory>();
 
 		return services;
+	}
+
+	private sealed class StoryblokContentDeliveryApiOptionsValidator : IValidateOptions<StoryblokContentDeliveryApiOptions>
+	{
+		public ValidateOptionsResult Validate(string? name, StoryblokContentDeliveryApiOptions options)
+		{
+			List<string> failures = [];
+
+			if (options.Clients.Count == 0)
+			{
+				failures.Add($"{nameof(StoryblokContentDeliveryApiOptions.Clients)} must include at least one client configuration.");
+			}
+
+			if (options.Clients.Any(static client => !Enum.IsDefined(client.Region)))
+			{
+				failures.Add($"{nameof(StoryblokContentDeliveryHttpClientOptions.Region)} must be a valid {nameof(StoryblokRegion)} value.");
+			}
+
+			HashSet<StoryblokRegion> configuredRegions = [];
+			if (options.Clients.Any(client => !configuredRegions.Add(client.Region)))
+			{
+				failures.Add($"{nameof(StoryblokContentDeliveryApiOptions.Clients)} can include at most one configuration per {nameof(StoryblokRegion)} value.");
+			}
+
+			return failures.Count == 0
+				? ValidateOptionsResult.Success
+				: ValidateOptionsResult.Fail(failures);
+		}
+	}
+
+	private sealed class StoryblokContentDeliveryApiRegistrationMarker
+	{
 	}
 }

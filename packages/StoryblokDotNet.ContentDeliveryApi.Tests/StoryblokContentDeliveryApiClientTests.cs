@@ -16,11 +16,11 @@ public sealed class StoryblokContentDeliveryApiClientTests
 
 		StoryblokContentDeliveryApiClient sut = new(factory);
 
-		Assert.NotNull(sut);
+		Assert.Equal(StoryblokRegion.Eu, sut.Region);
 	}
 
 	[Fact]
-	public void Region_WithSpecificRegion_ReturnsNewClient()
+	public void ForRegion_WithSpecificRegion_ReturnsNewClient()
 	{
 		RecordingHttpClientFactory httpClientFactory = new();
 		StoryblokContentDeliveryHttpClientFactory factory = new(httpClientFactory);
@@ -33,41 +33,15 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	}
 
 	[Fact]
-	public void Region_WithNullRegion_ReturnsNewClient()
-	{
-		RecordingHttpClientFactory httpClientFactory = new();
-		StoryblokContentDeliveryHttpClientFactory factory = new(httpClientFactory);
-		StoryblokContentDeliveryApiClient sut = new(factory);
-
-		StoryblokContentDeliveryApiClient fallbackClient = sut.ForRegion(null);
-
-		Assert.NotNull(fallbackClient);
-		Assert.NotSame(sut, fallbackClient);
-	}
-
-	[Fact]
-	public void Region_WithMultipleCalls_ReturnsNewInstanceEachTime()
+	public void ForRegion_WithSameRegion_ReturnsSameInstance()
 	{
 		RecordingHttpClientFactory httpClientFactory = new();
 		StoryblokContentDeliveryHttpClientFactory factory = new(httpClientFactory);
 		StoryblokContentDeliveryApiClient sut = new(factory);
 
 		StoryblokContentDeliveryApiClient usClient1 = sut.ForRegion(StoryblokRegion.Us);
-		StoryblokContentDeliveryApiClient usClient2 = sut.ForRegion(StoryblokRegion.Us);
+		StoryblokContentDeliveryApiClient usClient2 = usClient1.ForRegion(StoryblokRegion.Us);
 
-		Assert.NotSame(usClient1, usClient2);
-	}
-
-	private sealed class RecordingHttpClientFactory : IHttpClientFactory
-	{
-		private readonly List<string> clientNames = [];
-
-		public List<string> ClientNames => clientNames;
-
-		public HttpClient CreateClient(string name)
-		{
-			clientNames.Add(name);
-			return new HttpClient();
-		}
+		Assert.Same(usClient1, usClient2);
 	}
 }
