@@ -111,7 +111,18 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	public void AddStoryblokContentDeliveryApi_Called_RegistersKeyedApiClientsForMultipleRegions()
 	{
 		ServiceCollection services = new();
-		services.AddStoryblokContentDeliveryApi();
+		services.AddStoryblokContentDeliveryApi(options =>
+		{
+			options.Clients.Clear();
+			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = StoryblokRegion.Eu,
+			});
+			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = StoryblokRegion.Us,
+			});
+		});
 
 		using ServiceProvider serviceProvider = services.BuildServiceProvider();
 		StoryblokContentDeliveryApiClient euClient = serviceProvider.GetRequiredKeyedService<StoryblokContentDeliveryApiClient>(StoryblokRegion.Eu);
@@ -128,9 +139,17 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	public void AddStoryblokContentDeliveryApi_WithDefaultRegion_DefaultAndKeyedClientsCanCoexist()
 	{
 		ServiceCollection services = new();
-		services.AddStoryblokContentDeliveryApi(new StoryblokContentDeliveryHttpClientOptions
+		services.AddStoryblokContentDeliveryApi(options =>
 		{
-			Region = StoryblokRegion.Canada,
+			options.Clients.Clear();
+			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = StoryblokRegion.Canada,
+			});
+			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = StoryblokRegion.Australia,
+			});
 		});
 
 		using ServiceProvider serviceProvider = services.BuildServiceProvider();
@@ -141,5 +160,44 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		Assert.Equal(StoryblokRegion.Australia, australiaClient.ContentDeliveryHttpClient.Options.Region);
 		Assert.Equal(new Uri("https://api-ca.storyblok.com/v2/cdn"), defaultClient.ContentDeliveryHttpClient.HttpClient.BaseAddress);
 		Assert.Equal(new Uri("https://api-ap.storyblok.com/v2/cdn"), australiaClient.ContentDeliveryHttpClient.HttpClient.BaseAddress);
+	}
+
+	[Fact]
+	public void AddStoryblokContentDeliveryApi_WithOptionsPattern_DuplicateRegionsThrowOptionsValidationException()
+	{
+		ServiceCollection services = new();
+		services
+			.AddOptions<StoryblokContentDeliveryApiOptions>()
+			.Configure(options =>
+			{
+				options.Clients.Clear();
+				options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+				{
+					Region = StoryblokRegion.China,
+				});
+				options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+				{
+					Region = StoryblokRegion.China,
+				});
+			});
+		services.AddStoryblokContentDeliveryApi();
+
+		using ServiceProvider serviceProvider = services.BuildServiceProvider();
+
+		Assert.Throws<OptionsValidationException>(() => serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>());
+	}
+
+	[Fact]
+	public void AddStoryblokContentDeliveryApi_WithSingleConfiguredClient_UnconfiguredKeyedClientThrowsInvalidOperationException()
+	{
+		ServiceCollection services = new();
+		services.AddStoryblokContentDeliveryApi();
+
+		using ServiceProvider serviceProvider = services.BuildServiceProvider();
+
+		InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+			() => serviceProvider.GetRequiredKeyedService<StoryblokContentDeliveryApiClient>(StoryblokRegion.Us));
+
+		Assert.Contains("No Storyblok client configuration was supplied for region 'Us'.", exception.Message);
 	}
 }
