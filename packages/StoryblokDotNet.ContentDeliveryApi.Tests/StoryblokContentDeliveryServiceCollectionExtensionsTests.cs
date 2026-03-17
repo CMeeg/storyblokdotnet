@@ -1,35 +1,12 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Tests;
 
 public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 {
-	[Fact]
-	public void AddStoryblokContentDeliveryHttpClientFactory_Called_RegistersResolvableSingletonFactory()
-	{
-		ServiceCollection services = new();
-		services.AddStoryblokContentDeliveryHttpClientFactory();
-
-		using ServiceProvider serviceProvider = services.BuildServiceProvider();
-		StoryblokContentDeliveryHttpClientFactory firstFactory = serviceProvider.GetRequiredService<StoryblokContentDeliveryHttpClientFactory>();
-		StoryblokContentDeliveryHttpClientFactory secondFactory = serviceProvider.GetRequiredService<StoryblokContentDeliveryHttpClientFactory>();
-
-		StoryblokContentDeliveryHttpClient firstClient = firstFactory.Create(new StoryblokContentDeliveryHttpClientOptions
-		{
-			Region = StoryblokRegion.China,
-		});
-		StoryblokContentDeliveryHttpClient secondClient = secondFactory.Create(new StoryblokContentDeliveryHttpClientOptions
-		{
-			Region = StoryblokRegion.China,
-		});
-
-		Assert.Same(firstFactory, secondFactory);
-		Assert.Same(firstClient, secondClient);
-		Assert.Equal(new Uri("https://app.storyblokchina.cn/v2/cdn"), firstClient.HttpClient.BaseAddress);
-	}
-
 	[Fact]
 	public void AddStoryblokContentDeliveryApi_WithoutOptions_RegistersApiClientWithDefaultRegion()
 	{
@@ -38,11 +15,8 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 
 		using ServiceProvider serviceProvider = services.BuildServiceProvider();
 		StoryblokContentDeliveryApiClient apiClient = serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>();
-		StoryblokContentDeliveryHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<StoryblokContentDeliveryHttpClientFactory>();
 
-		Assert.Equal(StoryblokRegion.Eu, apiClient.ContentDeliveryHttpClient.Options.Region);
-		Assert.Equal(new Uri("https://api.storyblok.com/v2/cdn"), apiClient.ContentDeliveryHttpClient.HttpClient.BaseAddress);
-		Assert.Same(apiClient.ContentDeliveryHttpClient, httpClientFactory.Create());
+		Assert.Equal(StoryblokRegion.Eu, apiClient.Region);
 	}
 
 	[Fact]
@@ -57,8 +31,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		using ServiceProvider serviceProvider = services.BuildServiceProvider();
 		StoryblokContentDeliveryApiClient apiClient = serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>();
 
-		Assert.Equal(StoryblokRegion.Us, apiClient.ContentDeliveryHttpClient.Options.Region);
-		Assert.Equal(new Uri("https://api-us.storyblok.com/v2/cdn"), apiClient.ContentDeliveryHttpClient.HttpClient.BaseAddress);
+		Assert.Equal(StoryblokRegion.Us, apiClient.Region);
 	}
 
 	[Fact]
@@ -70,8 +43,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		using ServiceProvider serviceProvider = services.BuildServiceProvider();
 		StoryblokContentDeliveryApiClient apiClient = serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>();
 
-		Assert.Equal(StoryblokRegion.China, apiClient.ContentDeliveryHttpClient.Options.Region);
-		Assert.Equal(new Uri("https://app.storyblokchina.cn/v2/cdn"), apiClient.ContentDeliveryHttpClient.HttpClient.BaseAddress);
+		Assert.Equal(StoryblokRegion.China, apiClient.Region);
 	}
 
 	[Fact]
@@ -92,8 +64,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		using ServiceProvider serviceProvider = services.BuildServiceProvider();
 		StoryblokContentDeliveryApiClient apiClient = serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>();
 
-		Assert.Equal(StoryblokRegion.Canada, apiClient.ContentDeliveryHttpClient.Options.Region);
-		Assert.Equal(new Uri("https://api-ca.storyblok.com/v2/cdn"), apiClient.ContentDeliveryHttpClient.HttpClient.BaseAddress);
+		Assert.Equal(StoryblokRegion.Canada, apiClient.Region);
 	}
 
 	[Fact]
@@ -128,10 +99,8 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		StoryblokContentDeliveryApiClient euClient = serviceProvider.GetRequiredKeyedService<StoryblokContentDeliveryApiClient>(StoryblokRegion.Eu);
 		StoryblokContentDeliveryApiClient usClient = serviceProvider.GetRequiredKeyedService<StoryblokContentDeliveryApiClient>(StoryblokRegion.Us);
 
-		Assert.Equal(StoryblokRegion.Eu, euClient.ContentDeliveryHttpClient.Options.Region);
-		Assert.Equal(StoryblokRegion.Us, usClient.ContentDeliveryHttpClient.Options.Region);
-		Assert.Equal(new Uri("https://api.storyblok.com/v2/cdn"), euClient.ContentDeliveryHttpClient.HttpClient.BaseAddress);
-		Assert.Equal(new Uri("https://api-us.storyblok.com/v2/cdn"), usClient.ContentDeliveryHttpClient.HttpClient.BaseAddress);
+		Assert.Equal(StoryblokRegion.Eu, euClient.Region);
+		Assert.Equal(StoryblokRegion.Us, usClient.Region);
 		Assert.NotSame(euClient, usClient);
 	}
 
@@ -156,10 +125,8 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		StoryblokContentDeliveryApiClient defaultClient = serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>();
 		StoryblokContentDeliveryApiClient australiaClient = serviceProvider.GetRequiredKeyedService<StoryblokContentDeliveryApiClient>(StoryblokRegion.Australia);
 
-		Assert.Equal(StoryblokRegion.Canada, defaultClient.ContentDeliveryHttpClient.Options.Region);
-		Assert.Equal(StoryblokRegion.Australia, australiaClient.ContentDeliveryHttpClient.Options.Region);
-		Assert.Equal(new Uri("https://api-ca.storyblok.com/v2/cdn"), defaultClient.ContentDeliveryHttpClient.HttpClient.BaseAddress);
-		Assert.Equal(new Uri("https://api-ap.storyblok.com/v2/cdn"), australiaClient.ContentDeliveryHttpClient.HttpClient.BaseAddress);
+		Assert.Equal(StoryblokRegion.Canada, defaultClient.Region);
+		Assert.Equal(StoryblokRegion.Australia, australiaClient.Region);
 	}
 
 	[Fact]

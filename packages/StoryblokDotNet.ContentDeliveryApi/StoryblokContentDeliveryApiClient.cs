@@ -1,15 +1,45 @@
+using StoryblokDotNet.ContentDeliveryApi.Spaces;
+
 namespace StoryblokDotNet.ContentDeliveryApi;
 
 public sealed class StoryblokContentDeliveryApiClient
 {
+	private readonly StoryblokContentDeliveryHttpClientFactory httpClientFactory;
+	private readonly StoryblokContentDeliveryHttpClient contentDeliveryHttpClient;
+	private readonly StoryblokRegion? region;
+
+	public StoryblokRegion? Region => region;
+
 	public StoryblokContentDeliveryApiClient(
+		StoryblokContentDeliveryHttpClientFactory httpClientFactory)
+		: this(httpClientFactory, null)
+	{
+	}
+
+	internal StoryblokContentDeliveryApiClient(
 		StoryblokContentDeliveryHttpClientFactory httpClientFactory,
-		StoryblokContentDeliveryHttpClientOptions? options = null)
+		StoryblokRegion? region)
 	{
 		ArgumentNullException.ThrowIfNull(httpClientFactory);
 
-		ContentDeliveryHttpClient = httpClientFactory.Create(options);
+		this.httpClientFactory = httpClientFactory;
+		this.region = region;
+
+		contentDeliveryHttpClient = region is StoryblokRegion resolvedRegion
+			? httpClientFactory.Create(new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = resolvedRegion,
+			})
+			: httpClientFactory.Create();
 	}
 
-	public StoryblokContentDeliveryHttpClient ContentDeliveryHttpClient { get; }
+	public StoryblokContentDeliveryApiClient ForRegion(StoryblokRegion? region)
+	{
+		return new StoryblokContentDeliveryApiClient(httpClientFactory, region);
+	}
+
+	public StoryblokContentDeliverySpacesApi Spaces()
+	{
+		return new StoryblokContentDeliverySpacesApi(contentDeliveryHttpClient);
+	}
 }
