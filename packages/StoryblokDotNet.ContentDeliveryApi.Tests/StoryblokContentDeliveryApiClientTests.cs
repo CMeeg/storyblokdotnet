@@ -20,6 +20,30 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	}
 
 	[Fact]
+	public void Constructor_WithFactoryConfiguredWithMultipleClients_UsesFirstRegisteredClientAsDefault()
+	{
+		RecordingHttpClientFactory httpClientFactory = new();
+		StoryblokContentDeliveryApiOptions options = new();
+		options.Clients.Clear();
+		options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+		{
+			Region = StoryblokRegion.Us,
+			Token = "us-token",
+		});
+		options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+		{
+			Region = StoryblokRegion.Eu,
+			Token = "eu-token",
+		});
+		StoryblokContentDeliveryHttpClientFactory factory = new(httpClientFactory, options);
+
+		StoryblokContentDeliveryApiClient sut = new(factory);
+
+		Assert.Equal(StoryblokRegion.Us, sut.Region);
+		Assert.Equal("us-token", sut.Token);
+	}
+
+	[Fact]
 	public void ForRegion_WithSpecificRegion_ReturnsNewClient()
 	{
 		RecordingHttpClientFactory httpClientFactory = new();

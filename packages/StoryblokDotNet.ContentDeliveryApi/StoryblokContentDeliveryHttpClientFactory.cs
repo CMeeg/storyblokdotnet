@@ -72,7 +72,9 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 
 	public StoryblokContentDeliveryHttpClient Create(StoryblokContentDeliveryHttpClientOptions? options = null)
 	{
-		StoryblokContentDeliveryHttpClientOptions resolvedOptions = options ?? new StoryblokContentDeliveryHttpClientOptions();
+		StoryblokContentDeliveryHttpClientOptions resolvedOptions = options
+			?? defaultsByRegion.Values.FirstOrDefault()
+			?? new StoryblokContentDeliveryHttpClientOptions();
 
 		Lazy<StoryblokContentDeliveryHttpClient> lazyClient = clientsByRegion.GetOrAdd(
 			resolvedOptions.Region,
