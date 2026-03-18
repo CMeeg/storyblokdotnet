@@ -30,6 +30,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 			configuredOptions.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
 			{
 				Region = resolvedOptions.Region,
+				Token = resolvedOptions.Token,
 			});
 		});
 
@@ -132,7 +133,8 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 					StoryblokRegion resolvedRegion = serviceKey is StoryblokRegion regionKey
 						? regionKey
 						: throw new InvalidOperationException("Storyblok API client service key must be a StoryblokRegion value.");
-					bool hasConfigurationForRegion = options.Clients.Any(client => client.Region == resolvedRegion);
+					StoryblokContentDeliveryHttpClientOptions? configuredClientOptions = options.Clients.FirstOrDefault(client => client.Region == resolvedRegion);
+					bool hasConfigurationForRegion = configuredClientOptions is not null;
 
 					if (!hasConfigurationForRegion)
 					{
@@ -152,7 +154,13 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 	{
 		services.AddHttpClient();
 
-		services.TryAddSingleton<StoryblokContentDeliveryHttpClientFactory>();
+		services.TryAddSingleton(serviceProvider =>
+		{
+			IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+			StoryblokContentDeliveryApiOptions options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
+
+			return new StoryblokContentDeliveryHttpClientFactory(httpClientFactory, options);
+		});
 
 		return services;
 	}

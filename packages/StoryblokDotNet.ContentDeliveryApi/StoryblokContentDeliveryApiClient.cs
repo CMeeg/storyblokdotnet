@@ -6,9 +6,9 @@ public sealed class StoryblokContentDeliveryApiClient
 {
 	private readonly StoryblokContentDeliveryHttpClientFactory httpClientFactory;
 	private readonly StoryblokContentDeliveryHttpClient contentDeliveryHttpClient;
-	private readonly StoryblokRegion region;
 
-	public StoryblokRegion Region => region;
+	public StoryblokRegion Region => contentDeliveryHttpClient.Options.Region;
+	public string Token => contentDeliveryHttpClient.Options.Token;
 
 	public StoryblokContentDeliveryApiClient(
 		StoryblokContentDeliveryHttpClientFactory httpClientFactory)
@@ -24,21 +24,14 @@ public sealed class StoryblokContentDeliveryApiClient
 
 		this.httpClientFactory = httpClientFactory;
 
-		var clientOptions = region is StoryblokRegion resolvedRegion
-			? new StoryblokContentDeliveryHttpClientOptions
-			{
-				Region = resolvedRegion,
-			}
-			: new StoryblokContentDeliveryHttpClientOptions();
-
-		this.region = clientOptions.Region;
-
-		contentDeliveryHttpClient = httpClientFactory.Create(clientOptions);
+		contentDeliveryHttpClient = region is StoryblokRegion resolvedRegion
+			? httpClientFactory.Create(resolvedRegion)
+			: httpClientFactory.Create();
 	}
 
 	public StoryblokContentDeliveryApiClient ForRegion(StoryblokRegion region)
 	{
-		if (region == this.region)
+		if (region == Region)
 		{
 			return this;
 		}

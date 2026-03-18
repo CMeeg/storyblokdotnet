@@ -8,7 +8,9 @@ public sealed class StoryblokContentDeliveryHttpClient
 
 	public Uri BaseAddress => httpClient.BaseAddress!;
 
-	public StoryblokContentDeliveryHttpClient(HttpClient httpClient, StoryblokContentDeliveryHttpClientOptions? options = null)
+	public StoryblokContentDeliveryHttpClient(
+		HttpClient httpClient,
+		StoryblokContentDeliveryHttpClientOptions? options = null)
 	{
 		ArgumentNullException.ThrowIfNull(httpClient);
 		ArgumentNullException.ThrowIfNull(httpClient.BaseAddress);

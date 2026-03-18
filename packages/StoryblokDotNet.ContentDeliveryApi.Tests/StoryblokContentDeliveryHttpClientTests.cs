@@ -27,6 +27,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		StoryblokContentDeliveryHttpClient client = new(httpClient);
 
 		Assert.Equal(StoryblokRegion.Eu, client.Options.Region);
+		Assert.Equal(string.Empty, client.Options.Token);
 	}
 
 	[Fact]
@@ -39,11 +40,13 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		StoryblokContentDeliveryHttpClientOptions options = new()
 		{
 			Region = StoryblokRegion.China,
+			Token = "my-token",
 		};
 
 		StoryblokContentDeliveryHttpClient client = new(httpClient, options);
 
 		Assert.Same(options, client.Options);
 		Assert.Equal(StoryblokRegion.China, client.Options.Region);
+		Assert.Equal("my-token", client.Options.Token);
 	}
 }

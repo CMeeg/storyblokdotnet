@@ -6,4 +6,15 @@ public sealed class StoryblokContentDeliveryApiOptions
 	[
 		new StoryblokContentDeliveryHttpClientOptions(),
 	];
+
+	public StoryblokContentDeliveryApiOptions()
+	{
+	}
+
+	internal StoryblokContentDeliveryApiOptions(StoryblokContentDeliveryHttpClientOptions options)
+	{
+		Clients.Clear();
+
+		Clients.Add(options);
+	}
 }

@@ -44,4 +44,29 @@ public sealed class StoryblokContentDeliveryApiClientTests
 
 		Assert.Same(usClient1, usClient2);
 	}
+
+	[Fact]
+	public void ForRegion_WithRegionSpecificConfiguredToken_UsesTokenForTargetRegion()
+	{
+		RecordingHttpClientFactory httpClientFactory = new();
+		StoryblokContentDeliveryApiOptions options = new();
+		options.Clients.Clear();
+		options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+		{
+			Region = StoryblokRegion.Eu,
+			Token = "eu-token",
+		});
+		options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+		{
+			Region = StoryblokRegion.Us,
+			Token = "us-token",
+		});
+		StoryblokContentDeliveryHttpClientFactory factory = new(httpClientFactory, options);
+		StoryblokContentDeliveryApiClient sut = new(factory, StoryblokRegion.Eu);
+
+		StoryblokContentDeliveryApiClient usClient = sut.ForRegion(StoryblokRegion.Us);
+
+		Assert.Equal("eu-token", sut.Token);
+		Assert.Equal("us-token", usClient.Token);
+	}
 }

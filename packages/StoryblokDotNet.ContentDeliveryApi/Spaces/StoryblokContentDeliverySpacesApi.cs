@@ -5,6 +5,7 @@ public sealed class StoryblokContentDeliverySpacesApi
 	private readonly StoryblokContentDeliveryHttpClient contentDeliveryHttpClient;
 
 	public StoryblokRegion Region => contentDeliveryHttpClient.Options.Region;
+	public string Token => contentDeliveryHttpClient.Options.Token;
 
 	internal StoryblokContentDeliverySpacesApi(StoryblokContentDeliveryHttpClient contentDeliveryHttpClient)
 	{
