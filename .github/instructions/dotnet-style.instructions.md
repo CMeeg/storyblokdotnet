@@ -17,6 +17,8 @@ applyTo: "{**/*.{cs,csproj,props,targets,sln,slnx},**/global.json,**/nuget.confi
 - Keep package version definitions centralized in `Directory.Packages.props`.
 - Keep shared build and package metadata in `Directory.Build.props`.
 - Do not add NuGet package versions directly in project files unless the repository already has a documented exception.
+- Build warnings should be fixed, not ignored, unless there is a good reason to ignore them in which case that should be documented next where the exclusion appears.
+- Interface names should be prefixed with an uppercase `I`.
 
 ## Test Conventions
 

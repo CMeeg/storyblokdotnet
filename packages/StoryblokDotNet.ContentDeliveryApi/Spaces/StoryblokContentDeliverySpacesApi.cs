@@ -2,6 +2,8 @@ namespace StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 public sealed class StoryblokContentDeliverySpacesApi
 {
+	private const string RetrieveCurrentSpacePath = "/spaces/me";
+
 	private readonly StoryblokContentDeliveryHttpClient contentDeliveryHttpClient;
 
 	public StoryblokRegion Region => contentDeliveryHttpClient.Options.Region;
@@ -14,11 +16,20 @@ public sealed class StoryblokContentDeliverySpacesApi
 		this.contentDeliveryHttpClient = contentDeliveryHttpClient;
 	}
 
-	public object RetrieveCurrentSpace(object query)
+	public Task<RetrieveCurrentSpaceResponse?> RetrieveCurrentSpace(RetrieveCurrentSpaceQuery? query = null)
+	{
+		RetrieveCurrentSpaceQuery resolvedQuery = query ?? new RetrieveCurrentSpaceQuery();
+
+		return contentDeliveryHttpClient.Get<RetrieveCurrentSpaceResponse>(RetrieveCurrentSpacePath, resolvedQuery);
+	}
+
+	public Task<RetrieveCurrentSpaceResponse?> RetrieveCurrentSpace(Action<RetrieveCurrentSpaceQueryBuilder> query)
 	{
 		ArgumentNullException.ThrowIfNull(query);
-		_ = contentDeliveryHttpClient;
 
-		throw new NotImplementedException();
+		RetrieveCurrentSpaceQueryBuilder builder = new();
+		query(builder);
+
+		return RetrieveCurrentSpace(builder.Build());
 	}
 }

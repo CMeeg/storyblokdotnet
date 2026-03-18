@@ -12,6 +12,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 
 	private readonly ConcurrentDictionary<StoryblokRegion, Lazy<StoryblokContentDeliveryHttpClient>> clientsByRegion = new();
 	private readonly Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> defaultsByRegion;
+	private readonly StoryblokRegion defaultRegion;
 	private readonly IHttpClientFactory httpClientFactory;
 
 	internal static IReadOnlyList<StoryblokRegion> Regions { get; } =
@@ -56,6 +57,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 		}
 
 		this.defaultsByRegion = resolvedDefaultsByRegion;
+		this.defaultRegion = resolvedOptions.Clients.First().Region;
 	}
 
 	public StoryblokContentDeliveryHttpClient Create(StoryblokRegion region)
@@ -73,8 +75,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 	public StoryblokContentDeliveryHttpClient Create(StoryblokContentDeliveryHttpClientOptions? options = null)
 	{
 		StoryblokContentDeliveryHttpClientOptions resolvedOptions = options
-			?? defaultsByRegion.Values.FirstOrDefault()
-			?? new StoryblokContentDeliveryHttpClientOptions();
+			?? defaultsByRegion[defaultRegion];
 
 		Lazy<StoryblokContentDeliveryHttpClient> lazyClient = clientsByRegion.GetOrAdd(
 			resolvedOptions.Region,

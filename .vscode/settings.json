@@ -1,6 +1,7 @@
 {
 	"chat.tools.terminal.autoApprove": {
-		"dotnet test": true
+		"dotnet test": true,
+		"dotnet build": true
 	},
 	"chat.useAgentsMdFile": true,
 	"dotnet.defaultSolution": "StoryblokDotNet.slnx"

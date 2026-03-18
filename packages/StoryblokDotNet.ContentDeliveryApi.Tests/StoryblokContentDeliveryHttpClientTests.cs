@@ -1,3 +1,7 @@
+using System.Net;
+using System.Text;
+using StoryblokDotNet.ContentDeliveryApi.Spaces;
+
 namespace StoryblokDotNet.ContentDeliveryApi.Tests;
 
 public sealed class StoryblokContentDeliveryHttpClientTests
@@ -48,5 +52,54 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		Assert.Same(options, client.Options);
 		Assert.Equal(StoryblokRegion.China, client.Options.Region);
 		Assert.Equal("my-token", client.Options.Token);
+	}
+
+	[Fact]
+	public async Task Get_WithSerializedQuery_UsesBasePathAndQueryString()
+	{
+		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("{}"));
+		using HttpClient httpClient = new(handler)
+		{
+			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+		};
+		StoryblokContentDeliveryHttpClient client = new(httpClient);
+		RetrieveCurrentSpaceQuery query = new()
+		{
+			Token = "my token",
+		};
+
+		_ = await client.Get<object>("/spaces/me", query);
+
+		Assert.NotNull(handler.RequestUri);
+		Assert.Equal("https://api.storyblok.com/v2/cdn/spaces/me?token=my%20token", handler.RequestUri!.AbsoluteUri);
+	}
+
+	[Fact]
+	public async Task Get_WithEmptyQueryToken_UsesClientToken()
+	{
+		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("{}"));
+		using HttpClient httpClient = new(handler)
+		{
+			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+		};
+		StoryblokContentDeliveryHttpClientOptions options = new()
+		{
+			Token = "configured-token",
+		};
+		StoryblokContentDeliveryHttpClient client = new(httpClient, options);
+		RetrieveCurrentSpaceQuery query = new();
+
+		_ = await client.Get<object>("/spaces/me", query);
+
+		Assert.NotNull(handler.RequestUri);
+		Assert.Equal("https://api.storyblok.com/v2/cdn/spaces/me?token=configured-token", handler.RequestUri!.AbsoluteUri);
+	}
+
+	private static HttpResponseMessage CreateJsonResponse(string json)
+	{
+		return new HttpResponseMessage(HttpStatusCode.OK)
+		{
+			Content = new StringContent(json, Encoding.UTF8, "application/json"),
+		};
 	}
 }
