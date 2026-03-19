@@ -1,8 +1,9 @@
 using System.Net;
 using System.Text;
+using StoryblokDotNet.ContentDeliveryApi.Http;
 using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
-namespace StoryblokDotNet.ContentDeliveryApi.Tests;
+namespace StoryblokDotNet.ContentDeliveryApi.Tests.Http;
 
 public sealed class StoryblokContentDeliveryHttpClientTests
 {

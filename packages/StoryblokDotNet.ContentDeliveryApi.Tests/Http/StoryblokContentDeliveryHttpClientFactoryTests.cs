@@ -1,4 +1,6 @@
-namespace StoryblokDotNet.ContentDeliveryApi.Tests;
+using StoryblokDotNet.ContentDeliveryApi.Http;
+
+namespace StoryblokDotNet.ContentDeliveryApi.Tests.Http;
 
 public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 {

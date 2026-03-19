@@ -1,3 +1,5 @@
+using StoryblokDotNet.ContentDeliveryApi.Http;
+
 namespace StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 public sealed class StoryblokContentDeliverySpacesApi

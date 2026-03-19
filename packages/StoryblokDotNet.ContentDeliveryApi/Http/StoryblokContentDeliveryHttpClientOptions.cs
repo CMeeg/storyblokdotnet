@@ -1,4 +1,4 @@
-namespace StoryblokDotNet.ContentDeliveryApi;
+namespace StoryblokDotNet.ContentDeliveryApi.Http;
 
 public sealed class StoryblokContentDeliveryHttpClientOptions
 {

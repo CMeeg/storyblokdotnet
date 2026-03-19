@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace StoryblokDotNet.ContentDeliveryApi;
+namespace StoryblokDotNet.ContentDeliveryApi.Http;
 
 public sealed class StoryblokContentDeliveryResilienceOptions
 {

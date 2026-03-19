@@ -1,4 +1,5 @@
 using StoryblokDotNet.ContentDeliveryApi.Spaces;
+using StoryblokDotNet.ContentDeliveryApi.Http;
 
 namespace StoryblokDotNet.ContentDeliveryApi;
 

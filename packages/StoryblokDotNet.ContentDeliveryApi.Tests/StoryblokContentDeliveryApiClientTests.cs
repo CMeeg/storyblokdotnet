@@ -1,3 +1,5 @@
+using StoryblokDotNet.ContentDeliveryApi.Http;
+
 namespace StoryblokDotNet.ContentDeliveryApi.Tests;
 
 public sealed class StoryblokContentDeliveryApiClientTests

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using StoryblokDotNet.ContentDeliveryApi.Http;
 using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Tests.Spaces;

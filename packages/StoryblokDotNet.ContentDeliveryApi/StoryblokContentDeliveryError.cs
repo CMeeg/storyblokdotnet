@@ -14,3 +14,17 @@ public sealed class StoryblokContentDeliveryError
 
 	public TimeSpan? RetryAfter { get; init; }
 }
+
+public enum StoryblokContentDeliveryErrorCategory
+{
+	Unknown = 0,
+	BadRequest,
+	Unauthorized,
+	NotFound,
+	Validation,
+	RateLimited,
+	ServerError,
+	Network,
+	Timeout,
+	Serialization,
+}
