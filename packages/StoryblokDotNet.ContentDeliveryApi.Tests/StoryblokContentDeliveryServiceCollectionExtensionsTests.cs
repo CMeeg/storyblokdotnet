@@ -20,6 +20,26 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	}
 
 	[Fact]
+	public void AddStoryblokContentDeliveryResilience_WithManualHttpClientBuilder_RegistersNamedClient()
+	{
+		ServiceCollection services = new();
+		services
+			.AddHttpClient("manual-storyblok")
+			.AddStoryblokContentDeliveryResilience(new StoryblokContentDeliveryResilienceOptions
+			{
+				MaxRetryAttempts = 1,
+				UseJitter = false,
+			});
+
+		using ServiceProvider serviceProvider = services.BuildServiceProvider();
+		IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+
+		HttpClient client = httpClientFactory.CreateClient("manual-storyblok");
+
+		Assert.NotNull(client);
+	}
+
+	[Fact]
 	public void AddStoryblokContentDeliveryApi_WithOptions_UsesConfiguredRegionForRegisteredApiClient()
 	{
 		ServiceCollection services = new();

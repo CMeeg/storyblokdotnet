@@ -125,6 +125,23 @@ public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 	[Fact]
 	public void Constructor_WithoutHttpClientFactory_ThrowsArgumentNullException()
 	{
-		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryHttpClientFactory(null!));
+		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryHttpClientFactory((IHttpClientFactory)null!));
+	}
+
+	[Fact]
+	public void Constructor_WithHttpClientFactoryFunction_UsesFunctionToCreateClient()
+	{
+		int invocationCount = 0;
+		StoryblokContentDeliveryHttpClientFactory sut = new(() =>
+		{
+			invocationCount++;
+			return new HttpClient();
+		});
+
+		StoryblokContentDeliveryHttpClient client = sut.Create();
+
+		Assert.Equal(1, invocationCount);
+		Assert.Equal(StoryblokRegion.Eu, client.Options.Region);
+		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu), client.BaseAddress);
 	}
 }

@@ -9,6 +9,31 @@ namespace StoryblokDotNet.ContentDeliveryApi;
 
 public static class StoryblokContentDeliveryServiceCollectionExtensions
 {
+	public static IHttpClientBuilder AddStoryblokContentDeliveryResilience(
+		this IHttpClientBuilder httpClientBuilder,
+		StoryblokContentDeliveryResilienceOptions? resilienceOptions = null)
+	{
+		ArgumentNullException.ThrowIfNull(httpClientBuilder);
+
+		StoryblokContentDeliveryResilienceOptions resolvedResilienceOptions = resilienceOptions ?? new StoryblokContentDeliveryResilienceOptions();
+
+		httpClientBuilder.AddResilienceHandler("StoryblokRetry", (builder, context) =>
+		{
+			StoryblokContentDeliveryResilienceOptions options = context.ServiceProvider
+				.GetService<IOptions<StoryblokContentDeliveryApiOptions>>()?.Value.Resilience
+				?? resolvedResilienceOptions;
+
+			if (!options.Enabled || options.MaxRetryAttempts == 0)
+			{
+				return;
+			}
+
+			builder.AddRetry(CreateRetryStrategyOptions(options));
+		});
+
+		return httpClientBuilder;
+	}
+
 	public static IServiceCollection AddStoryblokContentDeliveryApi(this IServiceCollection services)
 	{
 		ArgumentNullException.ThrowIfNull(services);
@@ -161,18 +186,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 	private static IServiceCollection AddStoryblokContentDeliveryHttpClientFactory(this IServiceCollection services)
 	{
 		services.AddHttpClient(StoryblokContentDeliveryHttpClientFactory.HttpClientName)
-			.AddResilienceHandler("StoryblokRetry", static (builder, context) =>
-			{
-				StoryblokContentDeliveryApiOptions options = context.ServiceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
-				StoryblokContentDeliveryResilienceOptions resilienceOptions = options.Resilience;
-
-				if (!resilienceOptions.Enabled || resilienceOptions.MaxRetryAttempts == 0)
-				{
-					return;
-				}
-
-				builder.AddRetry(CreateRetryStrategyOptions(resilienceOptions));
-			});
+			.AddStoryblokContentDeliveryResilience();
 
 		services.TryAddSingleton(serviceProvider =>
 		{

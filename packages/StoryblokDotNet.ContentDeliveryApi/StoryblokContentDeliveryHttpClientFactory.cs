@@ -15,7 +15,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 	private readonly ConcurrentDictionary<StoryblokRegion, Lazy<StoryblokContentDeliveryHttpClient>> clientsByRegion = new();
 	private readonly Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> defaultsByRegion;
 	private readonly StoryblokRegion defaultRegion;
-	private readonly IHttpClientFactory httpClientFactory;
+	private readonly Func<HttpClient> httpClientFactory;
 
 	internal static IReadOnlyList<StoryblokRegion> Regions { get; } =
 	[
@@ -31,6 +31,11 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 	{
 	}
 
+	public StoryblokContentDeliveryHttpClientFactory(Func<HttpClient> httpClientFactory)
+		: this(httpClientFactory, null as StoryblokContentDeliveryApiOptions)
+	{
+	}
+
 	public StoryblokContentDeliveryHttpClientFactory(
 		IHttpClientFactory httpClientFactory,
 		StoryblokContentDeliveryHttpClientOptions? options)
@@ -39,7 +44,22 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 	}
 
 	public StoryblokContentDeliveryHttpClientFactory(
+		Func<HttpClient> httpClientFactory,
+		StoryblokContentDeliveryHttpClientOptions? options)
+		: this(httpClientFactory, new StoryblokContentDeliveryApiOptions(options ?? new StoryblokContentDeliveryHttpClientOptions()))
+	{
+	}
+
+	public StoryblokContentDeliveryHttpClientFactory(
 		IHttpClientFactory httpClientFactory,
+		StoryblokContentDeliveryApiOptions? options)
+		: this(() => httpClientFactory.CreateClient(HttpClientName), options)
+	{
+		ArgumentNullException.ThrowIfNull(httpClientFactory);
+	}
+
+	public StoryblokContentDeliveryHttpClientFactory(
+		Func<HttpClient> httpClientFactory,
 		StoryblokContentDeliveryApiOptions? options)
 	{
 		ArgumentNullException.ThrowIfNull(httpClientFactory);
@@ -96,7 +116,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 			Token = options.Token,
 		};
 
-		HttpClient httpClient = httpClientFactory.CreateClient(HttpClientName);
+		HttpClient httpClient = httpClientFactory();
 		httpClient.BaseAddress = GetBaseAddress(resolvedOptions.Region);
 
 		return new StoryblokContentDeliveryHttpClient(httpClient, resolvedOptions);
