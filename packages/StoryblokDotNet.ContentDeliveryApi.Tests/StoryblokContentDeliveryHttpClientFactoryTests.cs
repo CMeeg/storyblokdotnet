@@ -13,7 +13,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 		Assert.Equal(StoryblokRegion.Eu, client.Options.Region);
 		Assert.Equal(string.Empty, client.Options.Token);
 		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu), client.BaseAddress);
-		Assert.Equal(string.Empty, Assert.Single(httpClientFactory.ClientNames));
+		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.HttpClientName, Assert.Single(httpClientFactory.ClientNames));
 	}
 
 	[Fact]
@@ -32,7 +32,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 		Assert.Equal(StoryblokRegion.Us, client.Options.Region);
 		Assert.Equal("us-token", client.Options.Token);
 		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Us), client.BaseAddress);
-		Assert.Equal(string.Empty, Assert.Single(httpClientFactory.ClientNames));
+		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.HttpClientName, Assert.Single(httpClientFactory.ClientNames));
 	}
 
 	[Fact]
@@ -55,7 +55,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 		StoryblokContentDeliveryHttpClient second = sut.Create(secondOptions);
 
 		Assert.Same(first, second);
-		Assert.Equal(string.Empty, Assert.Single(httpClientFactory.ClientNames));
+		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.HttpClientName, Assert.Single(httpClientFactory.ClientNames));
 	}
 
 	[Fact]
@@ -80,7 +80,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 		Assert.Same(first, second);
 		Assert.Equal("first-token", first.Options.Token);
 		Assert.Equal("first-token", second.Options.Token);
-		Assert.Equal(string.Empty, Assert.Single(httpClientFactory.ClientNames));
+		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.HttpClientName, Assert.Single(httpClientFactory.ClientNames));
 	}
 
 	[Fact]
@@ -98,7 +98,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactoryTests
 		Assert.NotSame(euClient, australiaClient);
 		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Australia), australiaClient.BaseAddress);
 		Assert.Equal(2, httpClientFactory.ClientNames.Count);
-		Assert.All(httpClientFactory.ClientNames, static clientName => Assert.Equal(string.Empty, clientName));
+		Assert.All(httpClientFactory.ClientNames, static clientName => Assert.Equal(StoryblokContentDeliveryHttpClientFactory.HttpClientName, clientName));
 	}
 
 	[Fact]

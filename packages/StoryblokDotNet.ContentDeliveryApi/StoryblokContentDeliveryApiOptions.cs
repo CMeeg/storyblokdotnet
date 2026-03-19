@@ -7,6 +7,8 @@ public sealed class StoryblokContentDeliveryApiOptions
 		new StoryblokContentDeliveryHttpClientOptions(),
 	];
 
+	public StoryblokContentDeliveryResilienceOptions Resilience { get; set; } = new();
+
 	public StoryblokContentDeliveryApiOptions()
 	{
 	}

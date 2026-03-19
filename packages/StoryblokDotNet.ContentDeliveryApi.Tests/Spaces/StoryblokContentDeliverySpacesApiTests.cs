@@ -34,16 +34,17 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 		});
 		StoryblokContentDeliverySpacesApi sut = new(contentDeliveryHttpClient);
 
-		RetrieveCurrentSpaceResponse? response = await sut.RetrieveCurrentSpace();
+		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await sut.RetrieveCurrentSpace(cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.NotNull(handler.RequestUri);
 		Assert.Equal("https://api.storyblok.com/v2/cdn/spaces/me?token=configured-token", handler.RequestUri!.AbsoluteUri);
-		Assert.NotNull(response);
-		Assert.Equal(123456, response!.Space.Id);
-		Assert.Equal("Storyblok", response.Space.Name);
-		Assert.Equal("https://www.storyblok.com/", response.Space.Domain);
-		Assert.Equal(1544117388, response.Space.Version);
-		Assert.Equal(["de", "es"], response.Space.LanguageCodes);
+		Assert.True(response.IsSuccess);
+		Assert.NotNull(response.Data);
+		Assert.Equal(123456, response.Data!.Space.Id);
+		Assert.Equal("Storyblok", response.Data.Space.Name);
+		Assert.Equal("https://www.storyblok.com/", response.Data.Space.Domain);
+		Assert.Equal(1544117388, response.Data.Space.Version);
+		Assert.Equal(["de", "es"], response.Data.Space.LanguageCodes);
 	}
 
 	[Fact]
@@ -74,10 +75,11 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 		});
 		StoryblokContentDeliverySpacesApi sut = new(contentDeliveryHttpClient);
 
-		RetrieveCurrentSpaceResponse? response = await sut.RetrieveCurrentSpace(builder => builder.WithToken("builder-token"));
+		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await sut.RetrieveCurrentSpace(builder => builder.WithToken("builder-token"), TestContext.Current.CancellationToken);
 
 		Assert.NotNull(handler.RequestUri);
 		Assert.Equal("https://api.storyblok.com/v2/cdn/spaces/me?token=builder-token", handler.RequestUri!.AbsoluteUri);
-		Assert.NotNull(response);
+		Assert.True(response.IsSuccess);
+		Assert.NotNull(response.Data);
 	}
 }

@@ -6,9 +6,6 @@ public sealed class StoryblokContentDeliverySpacesApi
 
 	private readonly StoryblokContentDeliveryHttpClient contentDeliveryHttpClient;
 
-	public StoryblokRegion Region => contentDeliveryHttpClient.Options.Region;
-	public string Token => contentDeliveryHttpClient.Options.Token;
-
 	internal StoryblokContentDeliverySpacesApi(StoryblokContentDeliveryHttpClient contentDeliveryHttpClient)
 	{
 		ArgumentNullException.ThrowIfNull(contentDeliveryHttpClient);
@@ -16,20 +13,24 @@ public sealed class StoryblokContentDeliverySpacesApi
 		this.contentDeliveryHttpClient = contentDeliveryHttpClient;
 	}
 
-	public Task<RetrieveCurrentSpaceResponse?> RetrieveCurrentSpace(RetrieveCurrentSpaceQuery? query = null)
+	public Task<StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse>> RetrieveCurrentSpace(
+		RetrieveCurrentSpaceQuery? query = null,
+		CancellationToken cancellationToken = default)
 	{
 		RetrieveCurrentSpaceQuery resolvedQuery = query ?? new RetrieveCurrentSpaceQuery();
 
-		return contentDeliveryHttpClient.Get<RetrieveCurrentSpaceResponse>(RetrieveCurrentSpacePath, resolvedQuery);
+		return contentDeliveryHttpClient.Get<RetrieveCurrentSpaceResponse>(RetrieveCurrentSpacePath, resolvedQuery, cancellationToken);
 	}
 
-	public Task<RetrieveCurrentSpaceResponse?> RetrieveCurrentSpace(Action<RetrieveCurrentSpaceQueryBuilder> query)
+	public Task<StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse>> RetrieveCurrentSpace(
+		Action<RetrieveCurrentSpaceQueryBuilder> query,
+		CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(query);
 
 		RetrieveCurrentSpaceQueryBuilder builder = new();
 		query(builder);
 
-		return RetrieveCurrentSpace(builder.Build());
+		return RetrieveCurrentSpace(builder.Build(), cancellationToken);
 	}
 }

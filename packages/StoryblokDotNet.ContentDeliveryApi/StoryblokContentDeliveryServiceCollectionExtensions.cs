@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
+using Polly;
 
 namespace StoryblokDotNet.ContentDeliveryApi;
 
@@ -93,6 +95,12 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 				StoryblokContentDeliveryHttpClientOptions defaultClientOptions = new();
 				configuration.Bind(defaultClientOptions);
 				configuredOptions.Clients.Add(defaultClientOptions);
+
+				IConfigurationSection resilienceSection = configuration.GetSection(nameof(StoryblokContentDeliveryApiOptions.Resilience));
+				if (resilienceSection.Exists())
+				{
+					resilienceSection.Bind(configuredOptions.Resilience);
+				}
 			});
 		}
 
@@ -152,7 +160,19 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 
 	private static IServiceCollection AddStoryblokContentDeliveryHttpClientFactory(this IServiceCollection services)
 	{
-		services.AddHttpClient();
+		services.AddHttpClient(StoryblokContentDeliveryHttpClientFactory.HttpClientName)
+			.AddResilienceHandler("StoryblokRetry", static (builder, context) =>
+			{
+				StoryblokContentDeliveryApiOptions options = context.ServiceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
+				StoryblokContentDeliveryResilienceOptions resilienceOptions = options.Resilience;
+
+				if (!resilienceOptions.Enabled || resilienceOptions.MaxRetryAttempts == 0)
+				{
+					return;
+				}
+
+				builder.AddRetry(CreateRetryStrategyOptions(resilienceOptions));
+			});
 
 		services.TryAddSingleton(serviceProvider =>
 		{
@@ -163,6 +183,105 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		});
 
 		return services;
+	}
+
+	private static HttpRetryStrategyOptions CreateRetryStrategyOptions(StoryblokContentDeliveryResilienceOptions resilienceOptions)
+	{
+		return new HttpRetryStrategyOptions
+		{
+			MaxRetryAttempts = resilienceOptions.MaxRetryAttempts,
+			ShouldHandle = args =>
+			{
+				if (args.Outcome.Exception is HttpRequestException)
+				{
+					return PredicateResult.True();
+				}
+
+				if (args.Outcome.Exception is OperationCanceledException
+					&& !args.Context.CancellationToken.IsCancellationRequested)
+				{
+					return PredicateResult.True();
+				}
+
+				if (args.Outcome.Result is HttpResponseMessage response)
+				{
+					return resilienceOptions.ShouldRetryStatusCode(response.StatusCode)
+						? PredicateResult.True()
+						: PredicateResult.False();
+				}
+
+				return PredicateResult.False();
+			},
+			DelayGenerator = args =>
+			{
+				HttpResponseMessage? response = args.Outcome.Result;
+				TimeSpan resolvedDelay = ResolveRetryDelay(args.AttemptNumber, response, resilienceOptions);
+				return new ValueTask<TimeSpan?>(resolvedDelay);
+			},
+		};
+	}
+
+	internal static TimeSpan ResolveRetryDelay(int retryAttemptNumber, HttpResponseMessage? response, StoryblokContentDeliveryResilienceOptions resilienceOptions)
+	{
+		if (resilienceOptions.RespectRetryAfterHeader
+			&& response is not null
+			&& TryGetRetryAfterDelay(response, out TimeSpan retryAfterDelay))
+		{
+			return retryAfterDelay > resilienceOptions.MaxDelay
+				? resilienceOptions.MaxDelay
+				: retryAfterDelay;
+		}
+
+		int oneBasedAttemptNumber = Math.Max(1, retryAttemptNumber + 1);
+		return ComputeRetryDelay(oneBasedAttemptNumber, resilienceOptions);
+	}
+
+	private static bool TryGetRetryAfterDelay(HttpResponseMessage response, out TimeSpan retryAfterDelay)
+	{
+		retryAfterDelay = default;
+
+		if (response.Headers.RetryAfter is null)
+		{
+			return false;
+		}
+
+		if (response.Headers.RetryAfter.Delta is TimeSpan delta && delta > TimeSpan.Zero)
+		{
+			retryAfterDelay = delta;
+			return true;
+		}
+
+		if (response.Headers.RetryAfter.Date is DateTimeOffset retryAfterDate)
+		{
+			TimeSpan computedDelay = retryAfterDate - DateTimeOffset.UtcNow;
+			if (computedDelay > TimeSpan.Zero)
+			{
+				retryAfterDelay = computedDelay;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static TimeSpan ComputeRetryDelay(int attempt, StoryblokContentDeliveryResilienceOptions resilienceOptions)
+	{
+		double exponentialMs = resilienceOptions.InitialDelay.TotalMilliseconds
+			* Math.Pow(resilienceOptions.BackoffMultiplier, attempt - 1);
+		double cappedMs = Math.Min(exponentialMs, resilienceOptions.MaxDelay.TotalMilliseconds);
+
+		if (!resilienceOptions.UseJitter)
+		{
+			return TimeSpan.FromMilliseconds(cappedMs);
+		}
+
+		// Jitter does not require cryptographic randomness; used only to spread retry attempts.
+		#pragma warning disable CA5394
+		double jitterFactor = 0.5 + Random.Shared.NextDouble();
+		#pragma warning restore CA5394
+		double jitteredMs = Math.Min(cappedMs * jitterFactor, resilienceOptions.MaxDelay.TotalMilliseconds);
+
+		return TimeSpan.FromMilliseconds(jitteredMs);
 	}
 
 	private sealed class StoryblokContentDeliveryApiOptionsValidator : IValidateOptions<StoryblokContentDeliveryApiOptions>
@@ -185,6 +304,31 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 			if (options.Clients.Any(client => !configuredRegions.Add(client.Region)))
 			{
 				failures.Add($"{nameof(StoryblokContentDeliveryApiOptions.Clients)} can include at most one configuration per {nameof(StoryblokRegion)} value.");
+			}
+
+			if (options.Resilience.MaxRetryAttempts < 0)
+			{
+				failures.Add($"{nameof(StoryblokContentDeliveryResilienceOptions.MaxRetryAttempts)} must be zero or greater.");
+			}
+
+			if (options.Resilience.InitialDelay < TimeSpan.Zero)
+			{
+				failures.Add($"{nameof(StoryblokContentDeliveryResilienceOptions.InitialDelay)} must be zero or greater.");
+			}
+
+			if (options.Resilience.MaxDelay <= TimeSpan.Zero)
+			{
+				failures.Add($"{nameof(StoryblokContentDeliveryResilienceOptions.MaxDelay)} must be greater than zero.");
+			}
+
+			if (options.Resilience.MaxDelay < options.Resilience.InitialDelay)
+			{
+				failures.Add($"{nameof(StoryblokContentDeliveryResilienceOptions.MaxDelay)} must be greater than or equal to {nameof(StoryblokContentDeliveryResilienceOptions.InitialDelay)}.");
+			}
+
+			if (options.Resilience.BackoffMultiplier < 1)
+			{
+				failures.Add($"{nameof(StoryblokContentDeliveryResilienceOptions.BackoffMultiplier)} must be greater than or equal to 1.");
 			}
 
 			return failures.Count == 0

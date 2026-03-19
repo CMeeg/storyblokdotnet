@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Tests;
 
@@ -168,6 +169,46 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	}
 
 	[Fact]
+	public void AddStoryblokContentDeliveryApi_WithInvalidResilienceOptions_ThrowsOptionsValidationException()
+	{
+		ServiceCollection services = new();
+		services.AddStoryblokContentDeliveryApi(options =>
+		{
+			options.Resilience.MaxRetryAttempts = -1;
+			options.Resilience.BackoffMultiplier = 0.5;
+		});
+
+		using ServiceProvider serviceProvider = services.BuildServiceProvider();
+
+		Assert.Throws<OptionsValidationException>(() => serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>());
+	}
+
+	[Fact]
+	public void AddStoryblokContentDeliveryApi_WithCustomResilienceOptions_BindsConfiguration()
+	{
+		Dictionary<string, string?> settings = new()
+		{
+			["Storyblok:ContentDelivery:Resilience:MaxRetryAttempts"] = "5",
+			["Storyblok:ContentDelivery:Resilience:UseJitter"] = "false",
+			["Storyblok:ContentDelivery:Resilience:RespectRetryAfterHeader"] = "false",
+		};
+
+		IConfiguration configuration = new ConfigurationBuilder()
+			.AddInMemoryCollection(settings)
+			.Build();
+
+		ServiceCollection services = new();
+		services.AddStoryblokContentDeliveryApi(configuration.GetSection("Storyblok:ContentDelivery"));
+
+		using ServiceProvider serviceProvider = services.BuildServiceProvider();
+		IOptions<StoryblokContentDeliveryApiOptions> options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>();
+
+		Assert.Equal(5, options.Value.Resilience.MaxRetryAttempts);
+		Assert.False(options.Value.Resilience.UseJitter);
+		Assert.False(options.Value.Resilience.RespectRetryAfterHeader);
+	}
+
+	[Fact]
 	public void AddStoryblokContentDeliveryApi_CalledTwice_DoesNotDuplicateCoreRegistrations()
 	{
 		ServiceCollection services = new();
@@ -189,5 +230,53 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		Assert.Equal(1, unkeyedApiClientRegistrations);
 		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.Regions.Count, keyedApiClientRegistrations);
 		Assert.Equal(1, apiOptionsValidatorRegistrations);
+	}
+
+	[Fact]
+	public void ResolveRetryDelay_WithFirstRetryWithoutRetryAfter_UsesInitialDelay()
+	{
+		StoryblokContentDeliveryResilienceOptions resilienceOptions = new()
+		{
+			InitialDelay = TimeSpan.FromMilliseconds(250),
+			UseJitter = false,
+		};
+
+		TimeSpan retryDelay = StoryblokContentDeliveryServiceCollectionExtensions.ResolveRetryDelay(0, null, resilienceOptions);
+
+		Assert.Equal(TimeSpan.FromMilliseconds(250), retryDelay);
+	}
+
+	[Fact]
+	public void ResolveRetryDelay_WithRetryAfterAndRespectEnabled_UsesRetryAfterValue()
+	{
+		StoryblokContentDeliveryResilienceOptions resilienceOptions = new()
+		{
+			UseJitter = false,
+			RespectRetryAfterHeader = true,
+			MaxDelay = TimeSpan.FromSeconds(10),
+		};
+		using HttpResponseMessage response = new(HttpStatusCode.TooManyRequests);
+		response.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(3));
+
+		TimeSpan retryDelay = StoryblokContentDeliveryServiceCollectionExtensions.ResolveRetryDelay(0, response, resilienceOptions);
+
+		Assert.Equal(TimeSpan.FromSeconds(3), retryDelay);
+	}
+
+	[Fact]
+	public void ResolveRetryDelay_WithRetryAfterAndRespectDisabled_UsesBackoffDelay()
+	{
+		StoryblokContentDeliveryResilienceOptions resilienceOptions = new()
+		{
+			UseJitter = false,
+			RespectRetryAfterHeader = false,
+			InitialDelay = TimeSpan.FromMilliseconds(400),
+		};
+		using HttpResponseMessage response = new(HttpStatusCode.TooManyRequests);
+		response.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(3));
+
+		TimeSpan retryDelay = StoryblokContentDeliveryServiceCollectionExtensions.ResolveRetryDelay(0, response, resilienceOptions);
+
+		Assert.Equal(TimeSpan.FromMilliseconds(400), retryDelay);
 	}
 }

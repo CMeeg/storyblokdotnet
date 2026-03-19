@@ -4,6 +4,8 @@ namespace StoryblokDotNet.ContentDeliveryApi;
 
 public sealed class StoryblokContentDeliveryHttpClientFactory
 {
+	public const string HttpClientName = "StoryblokContentDeliveryApi";
+
 	private static readonly Uri EuBaseAddress = new("https://api.storyblok.com/v2/cdn", UriKind.Absolute);
 	private static readonly Uri UsBaseAddress = new("https://api-us.storyblok.com/v2/cdn", UriKind.Absolute);
 	private static readonly Uri CanadaBaseAddress = new("https://api-ca.storyblok.com/v2/cdn", UriKind.Absolute);
@@ -94,7 +96,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 			Token = options.Token,
 		};
 
-		HttpClient httpClient = httpClientFactory.CreateClient();
+		HttpClient httpClient = httpClientFactory.CreateClient(HttpClientName);
 		httpClient.BaseAddress = GetBaseAddress(resolvedOptions.Region);
 
 		return new StoryblokContentDeliveryHttpClient(httpClient, resolvedOptions);
