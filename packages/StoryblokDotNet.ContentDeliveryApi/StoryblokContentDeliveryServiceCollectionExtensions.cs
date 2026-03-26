@@ -171,23 +171,24 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 			services.TryAddSingleton<IStoryblokContentDeliveryCvCache>(StoryblokContentDeliveryNoOpCvCache.Instance);
 		}
 
-		services.AddStoryblokContentDeliveryHttpClientFactory();
+		services.AddHttpClient(StoryblokContentDeliveryApiClient.HttpClientName)
+			.AddStoryblokContentDeliveryResilience();
 
 		services.TryAddSingleton(serviceProvider =>
 		{
-			StoryblokContentDeliveryHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<StoryblokContentDeliveryHttpClientFactory>();
+			IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
 			StoryblokContentDeliveryApiOptions options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
-			StoryblokRegion defaultRegion = options.Clients[0].Region;
-			return new StoryblokContentDeliveryApiClient(httpClientFactory, defaultRegion);
+			IStoryblokContentDeliveryCvCache cvCache = serviceProvider.GetRequiredService<IStoryblokContentDeliveryCvCache>();
+			return new StoryblokContentDeliveryApiClient(options.Clients, httpClientFactory, cvCache);
 		});
 
-		foreach (StoryblokRegion region in StoryblokContentDeliveryHttpClientFactory.Regions)
+		foreach (StoryblokRegion region in StoryblokContentDeliveryApiClient.Regions)
 		{
 			services.AddKeyedSingleton<StoryblokContentDeliveryApiClient>(
 				region,
 				static (serviceProvider, serviceKey) =>
 				{
-					StoryblokContentDeliveryHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<StoryblokContentDeliveryHttpClientFactory>();
+					StoryblokContentDeliveryApiClient apiClient = serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>();
 					StoryblokContentDeliveryApiOptions options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
 					StoryblokRegion resolvedRegion = serviceKey is StoryblokRegion regionKey
 						? regionKey
@@ -200,28 +201,11 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 						throw new InvalidOperationException($"No Storyblok client configuration was supplied for region '{resolvedRegion}'.");
 					}
 
-					return new StoryblokContentDeliveryApiClient(httpClientFactory, resolvedRegion);
+					return apiClient.ForRegion(resolvedRegion);
 				});
 		}
 
 		services.AddSingleton<StoryblokContentDeliveryApiRegistrationMarker>();
-
-		return services;
-	}
-
-	private static IServiceCollection AddStoryblokContentDeliveryHttpClientFactory(this IServiceCollection services)
-	{
-		services.AddHttpClient(StoryblokContentDeliveryHttpClientFactory.HttpClientName)
-			.AddStoryblokContentDeliveryResilience();
-
-		services.TryAddSingleton(serviceProvider =>
-		{
-			IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-			StoryblokContentDeliveryApiOptions options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
-			IStoryblokContentDeliveryCvCache cvCache = serviceProvider.GetRequiredService<IStoryblokContentDeliveryCvCache>();
-
-			return new StoryblokContentDeliveryHttpClientFactory(httpClientFactory, options, cvCache);
-		});
 
 		return services;
 	}

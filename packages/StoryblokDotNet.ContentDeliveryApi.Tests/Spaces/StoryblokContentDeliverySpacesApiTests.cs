@@ -27,7 +27,7 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 		});
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient contentDeliveryHttpClient = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
 		{
@@ -68,7 +68,7 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 		});
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient contentDeliveryHttpClient = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
 		{

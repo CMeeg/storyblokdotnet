@@ -16,7 +16,6 @@ services.AddStoryblokContentDeliveryApi();
 
 This registers:
 
-- `StoryblokContentDeliveryHttpClientFactory`
 - default `StoryblokContentDeliveryApiClient` (unkeyed)
 - keyed `StoryblokContentDeliveryApiClient` registrations per configured region
 

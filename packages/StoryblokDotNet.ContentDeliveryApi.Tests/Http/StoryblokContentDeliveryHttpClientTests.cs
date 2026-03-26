@@ -26,7 +26,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 	{
 		using HttpClient httpClient = new()
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 
 		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryHttpClient(httpClient, null!));
@@ -37,7 +37,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 	{
 		using HttpClient httpClient = new()
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClientOptions options = new()
 		{
@@ -58,7 +58,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("{}"));
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		RetrieveCurrentSpaceQuery query = new()
@@ -80,7 +80,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("{}"));
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClientOptions options = new()
 		{
@@ -117,7 +117,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		});
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
 		{
@@ -152,7 +152,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		});
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
 		{
@@ -174,7 +174,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("{}"));
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
 		{
@@ -201,7 +201,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("{}"));
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
 		{
@@ -225,7 +225,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		});
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		StoryblokContentDeliveryRequest request = new("/spaces/me", new RetrieveCurrentSpaceQuery());
@@ -253,7 +253,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		});
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		StoryblokContentDeliveryRequest request = new("/spaces/me", new RetrieveCurrentSpaceQuery());
@@ -273,7 +273,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("not-json"));
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		StoryblokContentDeliveryRequest request = new("/spaces/me", new RetrieveCurrentSpaceQuery());
@@ -291,7 +291,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("{}"));
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		using CancellationTokenSource cancellationTokenSource = new();
@@ -308,7 +308,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("null"));
 		using HttpClient httpClient = new(handler)
 		{
-			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		StoryblokContentDeliveryRequest request = new("/spaces/me", new RetrieveCurrentSpaceQuery());

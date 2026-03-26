@@ -293,7 +293,6 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		services.AddStoryblokContentDeliveryApi();
 		services.AddStoryblokContentDeliveryApi();
 
-		int factoryRegistrations = services.Count(serviceDescriptor => serviceDescriptor.ServiceType == typeof(StoryblokContentDeliveryHttpClientFactory));
 		int unkeyedApiClientRegistrations = services.Count(serviceDescriptor =>
 			serviceDescriptor.ServiceType == typeof(StoryblokContentDeliveryApiClient)
 			&& serviceDescriptor.ServiceKey is null);
@@ -304,11 +303,9 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 			serviceDescriptor.ServiceType == typeof(IValidateOptions<StoryblokContentDeliveryApiOptions>));
 		int cvCacheRegistrations = services.Count(serviceDescriptor => serviceDescriptor.ServiceType == typeof(IStoryblokContentDeliveryCvCache));
 
-		Assert.Equal(1, factoryRegistrations);
 		Assert.Equal(1, unkeyedApiClientRegistrations);
-		Assert.Equal(StoryblokContentDeliveryHttpClientFactory.Regions.Count, keyedApiClientRegistrations);
+		Assert.Equal(StoryblokContentDeliveryApiClient.Regions.Count, keyedApiClientRegistrations);
 		Assert.Equal(1, apiOptionsValidatorRegistrations);
 		Assert.Equal(1, cvCacheRegistrations);
 	}
-
 }
