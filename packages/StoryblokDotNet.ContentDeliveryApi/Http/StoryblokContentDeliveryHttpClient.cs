@@ -27,19 +27,17 @@ public sealed class StoryblokContentDeliveryHttpClient
 	}
 
 	public async Task<StoryblokContentDeliveryResult<TResponse>> Get<TResponse>(
-		string path,
-		StoryblokContentDeliveryQuery query,
+		StoryblokContentDeliveryRequest request,
 		CancellationToken cancellationToken = default)
 	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(path);
-		ArgumentNullException.ThrowIfNull(query);
+		ArgumentNullException.ThrowIfNull(request);
 
-		Uri requestUri = BuildRequestUri(path, query);
-		using HttpRequestMessage request = new(HttpMethod.Get, requestUri);
+		Uri requestUri = BuildRequestUri(request);
+		using HttpRequestMessage httpRequest = new(HttpMethod.Get, requestUri);
 
 		try
 		{
-			using HttpResponseMessage response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+			using HttpResponseMessage response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
 			if (!response.IsSuccessStatusCode)
 			{
@@ -119,12 +117,16 @@ public sealed class StoryblokContentDeliveryHttpClient
 		return exception.InnerException is OperationCanceledException;
 	}
 
-	private Uri BuildRequestUri(string path, StoryblokContentDeliveryQuery query)
+	private Uri BuildRequestUri(StoryblokContentDeliveryRequest request)
 	{
+		ArgumentNullException.ThrowIfNull(request);
+		ArgumentException.ThrowIfNullOrWhiteSpace(request.Path);
+		ArgumentNullException.ThrowIfNull(request.Query);
+
 		QueryBuilder queryBuilder = new();
 		bool hasTokenParameter = false;
 
-		foreach (KeyValuePair<string, string?> parameter in query.GetParameters())
+		foreach (KeyValuePair<string, string?> parameter in request.Query.GetParameters())
 		{
 			if (string.IsNullOrWhiteSpace(parameter.Value))
 			{
@@ -146,7 +148,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 
 		UriBuilder requestUriBuilder = new(httpClient.BaseAddress!)
 		{
-			Path = $"{httpClient.BaseAddress!.AbsolutePath.TrimEnd('/')}/{path.TrimStart('/')}",
+			Path = $"{httpClient.BaseAddress!.AbsolutePath.TrimEnd('/')}/{request.Path.TrimStart('/')}",
 			Query = queryBuilder.ToQueryString().Value,
 		};
 

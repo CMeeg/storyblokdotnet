@@ -20,8 +20,9 @@ public sealed class StoryblokContentDeliverySpacesApi
 		CancellationToken cancellationToken = default)
 	{
 		RetrieveCurrentSpaceQuery resolvedQuery = query ?? new RetrieveCurrentSpaceQuery();
+		StoryblokContentDeliveryRequest request = new(RetrieveCurrentSpacePath, resolvedQuery);
 
-		return contentDeliveryHttpClient.Get<RetrieveCurrentSpaceResponse>(RetrieveCurrentSpacePath, resolvedQuery, cancellationToken);
+		return contentDeliveryHttpClient.Get<RetrieveCurrentSpaceResponse>(request, cancellationToken);
 	}
 
 	public Task<StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse>> RetrieveCurrentSpace(
