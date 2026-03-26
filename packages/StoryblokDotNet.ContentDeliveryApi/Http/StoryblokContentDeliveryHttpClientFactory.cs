@@ -26,33 +26,9 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 		StoryblokRegion.China,
 	];
 
-	public StoryblokContentDeliveryHttpClientFactory(IHttpClientFactory httpClientFactory)
-		: this(httpClientFactory, null as StoryblokContentDeliveryApiOptions)
-	{
-	}
-
-	public StoryblokContentDeliveryHttpClientFactory(Func<HttpClient> httpClientFactory)
-		: this(httpClientFactory, null as StoryblokContentDeliveryApiOptions)
-	{
-	}
-
 	public StoryblokContentDeliveryHttpClientFactory(
 		IHttpClientFactory httpClientFactory,
-		StoryblokContentDeliveryHttpClientOptions? options)
-		: this(httpClientFactory, new StoryblokContentDeliveryApiOptions(options ?? new StoryblokContentDeliveryHttpClientOptions()))
-	{
-	}
-
-	public StoryblokContentDeliveryHttpClientFactory(
-		Func<HttpClient> httpClientFactory,
-		StoryblokContentDeliveryHttpClientOptions? options)
-		: this(httpClientFactory, new StoryblokContentDeliveryApiOptions(options ?? new StoryblokContentDeliveryHttpClientOptions()))
-	{
-	}
-
-	public StoryblokContentDeliveryHttpClientFactory(
-		IHttpClientFactory httpClientFactory,
-		StoryblokContentDeliveryApiOptions? options)
+		StoryblokContentDeliveryApiOptions options)
 		: this(() => httpClientFactory.CreateClient(HttpClientName), options)
 	{
 		ArgumentNullException.ThrowIfNull(httpClientFactory);
@@ -60,16 +36,16 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 
 	public StoryblokContentDeliveryHttpClientFactory(
 		Func<HttpClient> httpClientFactory,
-		StoryblokContentDeliveryApiOptions? options)
+		StoryblokContentDeliveryApiOptions options)
 	{
 		ArgumentNullException.ThrowIfNull(httpClientFactory);
+		ArgumentNullException.ThrowIfNull(options);
 
 		this.httpClientFactory = httpClientFactory;
 
 		Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> resolvedDefaultsByRegion = [];
-		StoryblokContentDeliveryApiOptions resolvedOptions = options ?? new StoryblokContentDeliveryApiOptions();
 
-		foreach (StoryblokContentDeliveryHttpClientOptions clientOptions in resolvedOptions.Clients)
+		foreach (StoryblokContentDeliveryHttpClientOptions clientOptions in options.Clients)
 		{
 			resolvedDefaultsByRegion[clientOptions.Region] = new StoryblokContentDeliveryHttpClientOptions
 			{
@@ -79,30 +55,31 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 		}
 
 		this.defaultsByRegion = resolvedDefaultsByRegion;
-		this.defaultRegion = resolvedOptions.Clients.First().Region;
+		this.defaultRegion = options.Clients.First().Region;
 	}
 
-	public StoryblokContentDeliveryHttpClient Create(StoryblokRegion region)
+	public StoryblokContentDeliveryHttpClient Create(StoryblokRegion? region = null)
 	{
-		StoryblokContentDeliveryHttpClientOptions options = defaultsByRegion.TryGetValue(region, out StoryblokContentDeliveryHttpClientOptions? configuredOptions)
+		StoryblokRegion resolvedRegion = region ?? defaultRegion;
+
+		StoryblokContentDeliveryHttpClientOptions options = defaultsByRegion.TryGetValue(resolvedRegion, out StoryblokContentDeliveryHttpClientOptions? configuredOptions)
 			? configuredOptions
 			: new StoryblokContentDeliveryHttpClientOptions
 			{
-				Region = region,
+				Region = resolvedRegion,
 			};
 
 		return Create(options);
 	}
 
-	public StoryblokContentDeliveryHttpClient Create(StoryblokContentDeliveryHttpClientOptions? options = null)
+	private StoryblokContentDeliveryHttpClient Create(StoryblokContentDeliveryHttpClientOptions options)
 	{
-		StoryblokContentDeliveryHttpClientOptions resolvedOptions = options
-			?? defaultsByRegion[defaultRegion];
+		ArgumentNullException.ThrowIfNull(options);
 
 		Lazy<StoryblokContentDeliveryHttpClient> lazyClient = clientsByRegion.GetOrAdd(
-			resolvedOptions.Region,
+			options.Region,
 			region => new Lazy<StoryblokContentDeliveryHttpClient>(
-				() => CreateClient(resolvedOptions),
+				() => CreateClient(options),
 				LazyThreadSafetyMode.ExecutionAndPublication));
 
 		return lazyClient.Value;

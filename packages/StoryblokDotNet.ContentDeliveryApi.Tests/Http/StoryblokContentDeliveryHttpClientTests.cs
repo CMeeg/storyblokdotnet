@@ -10,7 +10,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 	[Fact]
 	public void Constructor_WithoutHttpClient_ThrowsArgumentNullException()
 	{
-		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryHttpClient(null!));
+		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryHttpClient(null!, new StoryblokContentDeliveryHttpClientOptions()));
 	}
 
 	[Fact]
@@ -18,21 +18,18 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 	{
 		using HttpClient httpClient = new();
 
-		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryHttpClient(httpClient));
+		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryHttpClient(httpClient, new StoryblokContentDeliveryHttpClientOptions()));
 	}
 
 	[Fact]
-	public void Constructor_WithoutOptions_CreatesDefaultOptions()
+	public void Constructor_WithoutOptions_ThrowsArgumentNullException()
 	{
 		using HttpClient httpClient = new()
 		{
 			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
 		};
 
-		StoryblokContentDeliveryHttpClient client = new(httpClient);
-
-		Assert.Equal(StoryblokRegion.Eu, client.Options.Region);
-		Assert.Equal(string.Empty, client.Options.Token);
+		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryHttpClient(httpClient, null!));
 	}
 
 	[Fact]
@@ -63,7 +60,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		{
 			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
 		};
-		StoryblokContentDeliveryHttpClient client = new(httpClient);
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		RetrieveCurrentSpaceQuery query = new()
 		{
 			Token = "my token",
@@ -109,7 +106,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		{
 			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
 		};
-		StoryblokContentDeliveryHttpClient client = new(httpClient);
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 
 		StoryblokContentDeliveryResult<object> response = await client.Get<object>("/spaces/me", new RetrieveCurrentSpaceQuery(), TestContext.Current.CancellationToken);
 
@@ -136,7 +133,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		{
 			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
 		};
-		StoryblokContentDeliveryHttpClient client = new(httpClient);
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 
 		StoryblokContentDeliveryResult<object> response = await client.Get<object>("/spaces/me", new RetrieveCurrentSpaceQuery(), TestContext.Current.CancellationToken);
 
@@ -155,7 +152,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		{
 			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
 		};
-		StoryblokContentDeliveryHttpClient client = new(httpClient);
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 
 		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await client.Get<RetrieveCurrentSpaceResponse>("/spaces/me", new RetrieveCurrentSpaceQuery(), TestContext.Current.CancellationToken);
 
@@ -172,7 +169,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		{
 			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
 		};
-		StoryblokContentDeliveryHttpClient client = new(httpClient);
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		using CancellationTokenSource cancellationTokenSource = new();
 		await cancellationTokenSource.CancelAsync();
 
@@ -188,7 +185,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		{
 			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
 		};
-		StoryblokContentDeliveryHttpClient client = new(httpClient);
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 
 		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await client.Get<RetrieveCurrentSpaceResponse>("/spaces/me", new RetrieveCurrentSpaceQuery(), TestContext.Current.CancellationToken);
 

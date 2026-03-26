@@ -15,16 +15,15 @@ public sealed class StoryblokContentDeliveryHttpClient
 
 	public StoryblokContentDeliveryHttpClient(
 		HttpClient httpClient,
-		StoryblokContentDeliveryHttpClientOptions? options = null)
+		StoryblokContentDeliveryHttpClientOptions options)
 	{
 		ArgumentNullException.ThrowIfNull(httpClient);
 		ArgumentNullException.ThrowIfNull(httpClient.BaseAddress);
-
-		StoryblokContentDeliveryHttpClientOptions resolvedOptions = options ?? new StoryblokContentDeliveryHttpClientOptions();
+		ArgumentNullException.ThrowIfNull(options);
 
 		this.httpClient = httpClient;
 
-		Options = resolvedOptions;
+		Options = options;
 	}
 
 	public async Task<StoryblokContentDeliveryResult<TResponse>> Get<TResponse>(

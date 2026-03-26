@@ -19,6 +19,7 @@ applyTo: "{**/*.{cs,csproj,props,targets,sln,slnx},**/global.json,**/nuget.confi
 - Do not add NuGet package versions directly in project files unless the repository already has a documented exception.
 - Build warnings should be fixed, not ignored, unless there is a good reason to ignore them in which case that should be documented next where the exclusion appears.
 - Interface names should be prefixed with an uppercase `I`.
+- In this repository, do not add the `Async` suffix to method names by default, even for `Task`-returning methods. Only use it when required for compatibility with an external API or to avoid an unavoidable overload conflict.
 
 ## Test Conventions
 

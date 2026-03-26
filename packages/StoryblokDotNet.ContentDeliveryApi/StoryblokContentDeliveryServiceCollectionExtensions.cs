@@ -83,7 +83,11 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 
 		if (configuration.GetSection("Clients").Exists())
 		{
-			services.Configure<StoryblokContentDeliveryApiOptions>(configuration);
+			services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions =>
+			{
+				configuredOptions.Clients.Clear();
+				configuration.Bind(configuredOptions);
+			});
 		}
 		else
 		{
