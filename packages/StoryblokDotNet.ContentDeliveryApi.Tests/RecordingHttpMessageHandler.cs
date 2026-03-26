@@ -5,6 +5,7 @@ internal sealed class RecordingHttpMessageHandler : HttpMessageHandler
 	private readonly Func<HttpRequestMessage, HttpResponseMessage> responseFactory;
 
 	public Uri? RequestUri { get; private set; }
+	public List<Uri> RequestUris { get; } = [];
 
 	public RecordingHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
 	{
@@ -15,7 +16,11 @@ internal sealed class RecordingHttpMessageHandler : HttpMessageHandler
 
 	protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 	{
-		RequestUri = request.RequestUri;
+		if (request.RequestUri is Uri requestUri)
+		{
+			RequestUri = requestUri;
+			RequestUris.Add(requestUri);
+		}
 
 		return Task.FromResult(responseFactory(request));
 	}

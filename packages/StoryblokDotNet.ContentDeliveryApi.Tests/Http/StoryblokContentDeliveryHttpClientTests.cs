@@ -98,6 +98,125 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 	}
 
 	[Fact]
+	public async Task Get_WithoutCv_ResolvesCvFromCurrentSpaceAndAppendsCvParameter()
+	{
+		using RecordingHttpMessageHandler handler = new(request =>
+		{
+			if (request.RequestUri?.AbsolutePath.EndsWith("/spaces/me", StringComparison.OrdinalIgnoreCase) == true)
+			{
+				return CreateJsonResponse("""
+				{
+				  "space": {
+				    "version": 1735815318
+				  }
+				}
+				""");
+			}
+
+			return CreateJsonResponse("{}");
+		});
+		using HttpClient httpClient = new(handler)
+		{
+			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+		};
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
+		{
+			Token = "configured-token",
+		});
+		StoryblokContentDeliveryRequest request = new("/stories", new RetrieveCurrentSpaceQuery());
+
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+
+		Assert.True(response.IsSuccess);
+		Assert.Equal(2, handler.RequestUris.Count);
+		Assert.EndsWith("/spaces/me?token=configured-token", handler.RequestUris[0].AbsoluteUri, StringComparison.Ordinal);
+		Assert.Equal("/v2/cdn/stories", handler.RequestUris[1].AbsolutePath);
+		Assert.Contains("token=configured-token", handler.RequestUris[1].Query, StringComparison.Ordinal);
+		Assert.Contains("cv=1735815318", handler.RequestUris[1].Query, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public async Task Get_WithoutCvAndCurrentSpaceResolutionFails_ContinuesWithoutCvParameter()
+	{
+		using RecordingHttpMessageHandler handler = new(request =>
+		{
+			if (request.RequestUri?.AbsolutePath.EndsWith("/spaces/me", StringComparison.OrdinalIgnoreCase) == true)
+			{
+				return new HttpResponseMessage(HttpStatusCode.InternalServerError)
+				{
+					Content = new StringContent("{\"message\":\"failed\"}", Encoding.UTF8, "application/json"),
+				};
+			}
+
+			return CreateJsonResponse("{}");
+		});
+		using HttpClient httpClient = new(handler)
+		{
+			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+		};
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
+		{
+			Token = "configured-token",
+		});
+		StoryblokContentDeliveryRequest request = new("/stories", new RetrieveCurrentSpaceQuery());
+
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+
+		Assert.True(response.IsSuccess);
+		Assert.Equal(2, handler.RequestUris.Count);
+		Assert.EndsWith("/spaces/me?token=configured-token", handler.RequestUris[0].AbsoluteUri, StringComparison.Ordinal);
+		Assert.EndsWith("/stories?token=configured-token", handler.RequestUris[1].AbsoluteUri, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public async Task Get_WithExplicitCv_SkipsCurrentSpaceResolution()
+	{
+		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("{}"));
+		using HttpClient httpClient = new(handler)
+		{
+			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+		};
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
+		{
+			Token = "configured-token",
+		});
+		RetrieveCurrentSpaceQuery query = new()
+		{
+			Cv = 1735815318,
+		};
+		StoryblokContentDeliveryRequest request = new("/stories", query);
+
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+
+		Assert.True(response.IsSuccess);
+		Assert.Single(handler.RequestUris);
+		Assert.Equal("/v2/cdn/stories", handler.RequestUris[0].AbsolutePath);
+		Assert.Contains("token=configured-token", handler.RequestUris[0].Query, StringComparison.Ordinal);
+		Assert.Contains("cv=1735815318", handler.RequestUris[0].Query, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public async Task Get_WithMissingCvForCurrentSpacePath_SkipsCurrentSpaceResolution()
+	{
+		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("{}"));
+		using HttpClient httpClient = new(handler)
+		{
+			BaseAddress = StoryblokContentDeliveryHttpClientFactory.GetBaseAddress(StoryblokRegion.Eu),
+		};
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
+		{
+			Token = "configured-token",
+		});
+		StoryblokContentDeliveryRequest request = new("/spaces/me", new RetrieveCurrentSpaceQuery());
+
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+
+		Assert.True(response.IsSuccess);
+		Assert.Single(handler.RequestUris);
+		Assert.EndsWith("/spaces/me?token=configured-token", handler.RequestUris[0].AbsoluteUri, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public async Task Get_WithUnauthorizedResponse_ReturnsUnauthorizedError()
 	{
 		using RecordingHttpMessageHandler handler = new(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized)

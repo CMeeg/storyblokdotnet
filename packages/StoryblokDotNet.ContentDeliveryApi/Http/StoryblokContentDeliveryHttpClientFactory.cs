@@ -16,6 +16,9 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 	private readonly Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> defaultsByRegion;
 	private readonly StoryblokRegion defaultRegion;
 	private readonly Func<HttpClient> httpClientFactory;
+	private readonly IStoryblokContentDeliveryCvCache cvCache;
+
+	internal IStoryblokContentDeliveryCvCache CvCache => cvCache;
 
 	internal static IReadOnlyList<StoryblokRegion> Regions { get; } =
 	[
@@ -28,20 +31,23 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 
 	public StoryblokContentDeliveryHttpClientFactory(
 		IHttpClientFactory httpClientFactory,
-		StoryblokContentDeliveryApiOptions options)
-		: this(() => httpClientFactory.CreateClient(HttpClientName), options)
+		StoryblokContentDeliveryApiOptions options,
+		IStoryblokContentDeliveryCvCache? cvCache = null)
+		: this(() => httpClientFactory.CreateClient(HttpClientName), options, cvCache)
 	{
 		ArgumentNullException.ThrowIfNull(httpClientFactory);
 	}
 
 	public StoryblokContentDeliveryHttpClientFactory(
 		Func<HttpClient> httpClientFactory,
-		StoryblokContentDeliveryApiOptions options)
+		StoryblokContentDeliveryApiOptions options,
+		IStoryblokContentDeliveryCvCache? cvCache = null)
 	{
 		ArgumentNullException.ThrowIfNull(httpClientFactory);
 		ArgumentNullException.ThrowIfNull(options);
 
 		this.httpClientFactory = httpClientFactory;
+		this.cvCache = cvCache ?? StoryblokContentDeliveryNoOpCvCache.Instance;
 
 		Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> resolvedDefaultsByRegion = [];
 
@@ -96,7 +102,7 @@ public sealed class StoryblokContentDeliveryHttpClientFactory
 		HttpClient httpClient = httpClientFactory();
 		httpClient.BaseAddress = GetBaseAddress(resolvedOptions.Region);
 
-		return new StoryblokContentDeliveryHttpClient(httpClient, resolvedOptions);
+		return new StoryblokContentDeliveryHttpClient(httpClient, resolvedOptions, cvCache);
 	}
 
 	internal static Uri GetBaseAddress(StoryblokRegion region) => region switch

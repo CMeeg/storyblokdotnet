@@ -100,4 +100,37 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		Assert.Equal("eu-token", sut.Token);
 		Assert.Equal("us-token", usClient.Token);
 	}
+
+	[Fact]
+	public async Task ClearCv_WithCurrentRegion_ClearsCacheForCurrentRegion()
+	{
+		RecordingHttpClientFactory httpClientFactory = new();
+		StoryblokContentDeliveryApiOptions options = new("TOKEN");
+		RecordingCvCache cvCache = new();
+		StoryblokContentDeliveryHttpClientFactory factory = new(httpClientFactory, options, cvCache);
+		StoryblokContentDeliveryApiClient sut = new(factory, StoryblokRegion.Us);
+
+		await sut.ClearCv(TestContext.Current.CancellationToken);
+
+		Assert.Equal(StoryblokRegion.Us, cvCache.ClearedRegion);
+	}
+
+	private sealed class RecordingCvCache : IStoryblokContentDeliveryCvCache
+	{
+		public StoryblokRegion? ClearedRegion { get; private set; }
+
+		public Task<long> GetOrCreateCv(
+			StoryblokRegion region,
+			Func<CancellationToken, Task<long>> valueFactory,
+			CancellationToken cancellationToken = default)
+		{
+			return valueFactory(cancellationToken);
+		}
+
+		public Task ClearCv(StoryblokRegion region, CancellationToken cancellationToken = default)
+		{
+			ClearedRegion = region;
+			return Task.CompletedTask;
+		}
+	}
 }

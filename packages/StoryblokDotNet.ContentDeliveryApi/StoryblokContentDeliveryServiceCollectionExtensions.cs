@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -12,7 +13,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 	{
 		ArgumentNullException.ThrowIfNull(services);
 
-		return AddStoryblokContentDeliveryApiCore(services);
+		return AddStoryblokContentDeliveryApiCore(services, useCvCache: true);
 	}
 
 	public static IServiceCollection AddStoryblokContentDeliveryApi(
@@ -23,7 +24,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 
 		StoryblokContentDeliveryHttpClientOptions resolvedOptions = options ?? new StoryblokContentDeliveryHttpClientOptions();
 
-		AddStoryblokContentDeliveryApiCore(services);
+		AddStoryblokContentDeliveryApiCore(services, useCvCache: true);
 
 		services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions =>
 		{
@@ -45,7 +46,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		ArgumentNullException.ThrowIfNull(services);
 		ArgumentNullException.ThrowIfNull(configureOptions);
 
-		AddStoryblokContentDeliveryApiCore(services);
+		AddStoryblokContentDeliveryApiCore(services, useCvCache: true);
 
 		services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions =>
 		{
@@ -65,9 +66,12 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		ArgumentNullException.ThrowIfNull(services);
 		ArgumentNullException.ThrowIfNull(configureOptions);
 
-		AddStoryblokContentDeliveryApiCore(services);
+		StoryblokContentDeliveryApiOptions resolvedOptions = new();
+		configureOptions(resolvedOptions);
 
-		services.Configure(configureOptions);
+		AddStoryblokContentDeliveryApiCore(services, resolvedOptions.UseCvCache);
+
+		services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions => CopyOptions(resolvedOptions, configuredOptions));
 
 		return services;
 	}
@@ -79,7 +83,9 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		ArgumentNullException.ThrowIfNull(services);
 		ArgumentNullException.ThrowIfNull(configuration);
 
-		AddStoryblokContentDeliveryApiCore(services);
+		bool useCvCache = configuration.GetValue<bool?>(nameof(StoryblokContentDeliveryApiOptions.UseCvCache)) ?? true;
+
+		AddStoryblokContentDeliveryApiCore(services, useCvCache);
 
 		if (configuration.GetSection("Clients").Exists())
 		{
@@ -110,7 +116,35 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		return services;
 	}
 
-	private static IServiceCollection AddStoryblokContentDeliveryApiCore(IServiceCollection services)
+	private static void CopyOptions(
+		StoryblokContentDeliveryApiOptions source,
+		StoryblokContentDeliveryApiOptions destination)
+	{
+		ArgumentNullException.ThrowIfNull(source);
+		ArgumentNullException.ThrowIfNull(destination);
+
+		destination.Clients.Clear();
+		foreach (StoryblokContentDeliveryHttpClientOptions client in source.Clients)
+		{
+			destination.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = client.Region,
+				Token = client.Token,
+			});
+		}
+
+		destination.Resilience.MaxRetryAttempts = source.Resilience.MaxRetryAttempts;
+		destination.Resilience.InitialDelay = source.Resilience.InitialDelay;
+		destination.Resilience.MaxDelay = source.Resilience.MaxDelay;
+		destination.Resilience.BackoffMultiplier = source.Resilience.BackoffMultiplier;
+		destination.Resilience.UseJitter = source.Resilience.UseJitter;
+		destination.Resilience.RespectRetryAfterHeader = source.Resilience.RespectRetryAfterHeader;
+		destination.UseCvCache = source.UseCvCache;
+	}
+
+	private static IServiceCollection AddStoryblokContentDeliveryApiCore(
+		IServiceCollection services,
+		bool useCvCache)
 	{
 		if (services.Any(static serviceDescriptor => serviceDescriptor.ServiceType == typeof(StoryblokContentDeliveryApiRegistrationMarker)))
 		{
@@ -122,6 +156,20 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 			.ValidateOnStart();
 
 		services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<StoryblokContentDeliveryApiOptions>, StoryblokContentDeliveryApiOptionsValidator>());
+
+		if (useCvCache && services.All(static serviceDescriptor => serviceDescriptor.ServiceType != typeof(HybridCache)))
+		{
+			services.AddHybridCache();
+		}
+
+		if (useCvCache)
+		{
+			services.TryAddSingleton<IStoryblokContentDeliveryCvCache, StoryblokContentDeliveryHybridCvCache>();
+		}
+		else
+		{
+			services.TryAddSingleton<IStoryblokContentDeliveryCvCache>(StoryblokContentDeliveryNoOpCvCache.Instance);
+		}
 
 		services.AddStoryblokContentDeliveryHttpClientFactory();
 
@@ -170,8 +218,9 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		{
 			IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
 			StoryblokContentDeliveryApiOptions options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
+			IStoryblokContentDeliveryCvCache cvCache = serviceProvider.GetRequiredService<IStoryblokContentDeliveryCvCache>();
 
-			return new StoryblokContentDeliveryHttpClientFactory(httpClientFactory, options);
+			return new StoryblokContentDeliveryHttpClientFactory(httpClientFactory, options, cvCache);
 		});
 
 		return services;

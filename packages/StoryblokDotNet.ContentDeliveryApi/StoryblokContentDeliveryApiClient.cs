@@ -1,5 +1,5 @@
-using StoryblokDotNet.ContentDeliveryApi.Spaces;
 using StoryblokDotNet.ContentDeliveryApi.Http;
+using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 namespace StoryblokDotNet.ContentDeliveryApi;
 
@@ -7,6 +7,7 @@ public sealed class StoryblokContentDeliveryApiClient
 {
 	private readonly StoryblokContentDeliveryHttpClientFactory httpClientFactory;
 	private readonly StoryblokContentDeliveryHttpClient contentDeliveryHttpClient;
+	private readonly IStoryblokContentDeliveryCvCache cvCache;
 
 	public StoryblokRegion Region => contentDeliveryHttpClient.Options.Region;
 	public string Token => contentDeliveryHttpClient.Options.Token;
@@ -24,6 +25,7 @@ public sealed class StoryblokContentDeliveryApiClient
 		ArgumentNullException.ThrowIfNull(httpClientFactory);
 
 		this.httpClientFactory = httpClientFactory;
+		this.cvCache = httpClientFactory.CvCache;
 
 		contentDeliveryHttpClient = region is StoryblokRegion resolvedRegion
 			? httpClientFactory.Create(resolvedRegion)
@@ -38,6 +40,11 @@ public sealed class StoryblokContentDeliveryApiClient
 		}
 
 		return new StoryblokContentDeliveryApiClient(httpClientFactory, region);
+	}
+
+	public Task ClearCv(CancellationToken cancellationToken = default)
+	{
+		return cvCache.ClearCv(Region, cancellationToken);
 	}
 
 	public StoryblokContentDeliverySpacesApi Spaces()

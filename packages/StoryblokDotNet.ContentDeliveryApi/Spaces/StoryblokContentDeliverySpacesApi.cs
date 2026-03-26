@@ -4,8 +4,6 @@ namespace StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 public sealed class StoryblokContentDeliverySpacesApi
 {
-	private const string RetrieveCurrentSpacePath = "/spaces/me";
-
 	private readonly StoryblokContentDeliveryHttpClient contentDeliveryHttpClient;
 
 	internal StoryblokContentDeliverySpacesApi(StoryblokContentDeliveryHttpClient contentDeliveryHttpClient)
@@ -20,7 +18,7 @@ public sealed class StoryblokContentDeliverySpacesApi
 		CancellationToken cancellationToken = default)
 	{
 		RetrieveCurrentSpaceQuery resolvedQuery = query ?? new RetrieveCurrentSpaceQuery();
-		StoryblokContentDeliveryRequest request = new(RetrieveCurrentSpacePath, resolvedQuery);
+		RetrieveCurrentSpaceRequest request = new(resolvedQuery);
 
 		return contentDeliveryHttpClient.Get<RetrieveCurrentSpaceResponse>(request, cancellationToken);
 	}

@@ -11,11 +11,19 @@ public sealed class RetrieveCurrentSpaceQueryBuilder : IStoryblokContentDelivery
 		return this;
 	}
 
+	public RetrieveCurrentSpaceQueryBuilder WithCv(long cv)
+	{
+		query.Cv = cv;
+
+		return this;
+	}
+
 	public RetrieveCurrentSpaceQuery Build()
 	{
 		return new RetrieveCurrentSpaceQuery
 		{
 			Token = query.Token,
+			Cv = query.Cv,
 		};
 	}
 }

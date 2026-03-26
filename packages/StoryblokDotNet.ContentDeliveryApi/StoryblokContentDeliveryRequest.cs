@@ -1,6 +1,6 @@
 namespace StoryblokDotNet.ContentDeliveryApi;
 
-public sealed class StoryblokContentDeliveryRequest
+public class StoryblokContentDeliveryRequest
 {
 	public string Path { get; }
 

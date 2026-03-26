@@ -8,6 +8,8 @@ public sealed class StoryblokContentDeliveryApiOptions
 
 	public StoryblokContentDeliveryResilienceOptions Resilience { get; }
 
+	public bool UseCvCache { get; set; } = true;
+
 	public StoryblokContentDeliveryApiOptions()
 		: this(new StoryblokContentDeliveryHttpClientOptions())
 	{
@@ -28,6 +30,7 @@ public sealed class StoryblokContentDeliveryApiOptions
 			},
 		];
 		Resilience = resilience ?? new StoryblokContentDeliveryResilienceOptions();
+		UseCvCache = true;
 	}
 
 	public StoryblokContentDeliveryApiOptions(
@@ -64,5 +67,6 @@ public sealed class StoryblokContentDeliveryApiOptions
 			.ToList();
 
 		Resilience = resilience ?? new StoryblokContentDeliveryResilienceOptions();
+		UseCvCache = true;
 	}
 }
