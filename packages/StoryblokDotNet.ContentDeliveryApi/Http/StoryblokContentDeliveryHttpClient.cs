@@ -9,6 +9,8 @@ namespace StoryblokDotNet.ContentDeliveryApi.Http;
 
 public sealed class StoryblokContentDeliveryHttpClient
 {
+	internal const string CvCacheTag = "sbcd-internal-cv";
+
 	private readonly HttpClient httpClient;
 	private readonly IStoryblokContentDeliveryApiCache cache;
 
@@ -38,7 +40,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
-		StoryblokContentDeliveryRequest resolvedRequest = await ResolveRequest(request, cacheEntryOptions, cancellationToken).ConfigureAwait(false);
+		StoryblokContentDeliveryRequest resolvedRequest = await ResolveRequest(request, cancellationToken).ConfigureAwait(false);
 
 		return await cache
 			.GetOrCreate(
@@ -56,7 +58,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
-		StoryblokContentDeliveryRequest resolvedRequest = await ResolveRequest(request, cacheEntryOptions: null, cancellationToken).ConfigureAwait(false);
+		StoryblokContentDeliveryRequest resolvedRequest = await ResolveRequest(request, cancellationToken).ConfigureAwait(false);
 		await cache.Clear(Options.Region, resolvedRequest, cancellationToken).ConfigureAwait(false);
 	}
 
@@ -161,7 +163,6 @@ public sealed class StoryblokContentDeliveryHttpClient
 
 	private async Task<StoryblokContentDeliveryRequest> ResolveRequest(
 		StoryblokContentDeliveryRequest request,
-		StoryblokContentDeliveryCacheEntryOptions? cacheEntryOptions,
 		CancellationToken cancellationToken)
 	{
 		string? resolvedToken = ResolveToken(request);
@@ -225,10 +226,13 @@ public sealed class StoryblokContentDeliveryHttpClient
 
 	private StoryblokContentDeliveryCacheEntryOptions BuildCvCacheEntryOptions()
 	{
-		return new StoryblokContentDeliveryCacheEntryOptions
+		StoryblokContentDeliveryCacheEntryOptions cacheEntryOptions = new()
 		{
 			Expiration = TimeSpan.FromSeconds(Options.Cache.CvTtl),
 		};
+		cacheEntryOptions.Tags.Add(CvCacheTag);
+
+		return cacheEntryOptions;
 	}
 
 	private static bool IsRetrieveCurrentSpacePath(string path)

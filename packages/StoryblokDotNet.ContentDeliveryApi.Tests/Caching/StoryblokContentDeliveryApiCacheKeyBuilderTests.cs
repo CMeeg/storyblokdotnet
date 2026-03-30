@@ -19,7 +19,7 @@ public sealed class StoryblokContentDeliveryApiCacheKeyBuilderTests
 		string cacheKey = StoryblokContentDeliveryApiCacheKeyBuilder.Create(StoryblokRegion.Eu, request, maximumKeyLength);
 
 		Assert.True(cacheKey.Length <= maximumKeyLength);
-		Assert.Matches(new Regex("^sb-cd-api:req:eu:[0-9a-f]{64}$", RegexOptions.CultureInvariant), cacheKey);
+		Assert.Matches(new Regex($"^{Regex.Escape(StoryblokContentDeliveryApiCacheKeyBuilder.CacheKeyPrefix)}:eu:[0-9a-f]{{64}}$", RegexOptions.CultureInvariant), cacheKey);
 	}
 
 	[Fact]

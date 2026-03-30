@@ -7,7 +7,7 @@ namespace StoryblokDotNet.ContentDeliveryApi.Caching;
 [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Cache keys are intentionally normalized to lowercase to keep key identity stable across case-sensitive providers.")]
 internal static class StoryblokContentDeliveryApiCacheKeyBuilder
 {
-	private const string CacheKeyPrefix = "sb-cd-api:req";
+	internal const string CacheKeyPrefix = "sb-cd-api:req";
 
 	public static string Create(StoryblokRegion region, StoryblokContentDeliveryRequest request, int maximumKeyLength)
 	{

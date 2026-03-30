@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using StoryblokDotNet.ContentDeliveryApi.Caching;
 using StoryblokDotNet.ContentDeliveryApi.Http;
 using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
@@ -133,6 +134,42 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		Assert.Equal("/v2/cdn/stories", handler.RequestUris[1].AbsolutePath);
 		Assert.Contains("token=configured-token", handler.RequestUris[1].Query, StringComparison.Ordinal);
 		Assert.Contains("cv=1735815318", handler.RequestUris[1].Query, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public async Task Get_WithoutCv_UsesInternalCvCacheTagWhenResolvingCurrentSpace()
+	{
+		using RecordingHttpMessageHandler handler = new(request =>
+		{
+			if (request.RequestUri?.AbsolutePath.EndsWith("/spaces/me", StringComparison.OrdinalIgnoreCase) == true)
+			{
+				return CreateJsonResponse("""
+				{
+				  "space": {
+				    "version": 1735815318
+				  }
+				}
+				""");
+			}
+
+			return CreateJsonResponse("{}");
+		});
+		using HttpClient httpClient = new(handler)
+		{
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
+		};
+		RecordingApiCache cache = new();
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
+		{
+			Token = "configured-token",
+		}, cache);
+		StoryblokContentDeliveryRequest request = new("/stories", new RetrieveCurrentSpaceQuery());
+
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
+
+		Assert.True(response.IsSuccess);
+		Assert.Equal(2, cache.ReceivedOptions.Count);
+		Assert.Contains(cache.ReceivedOptions, options => options?.Tags.Contains(StoryblokContentDeliveryHttpClient.CvCacheTag) == true);
 	}
 
 	[Fact]
@@ -327,5 +364,36 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		{
 			Content = new StringContent(json, Encoding.UTF8, "application/json"),
 		};
+	}
+
+	private sealed class RecordingApiCache : IStoryblokContentDeliveryApiCache
+	{
+		public List<StoryblokContentDeliveryCacheEntryOptions?> ReceivedOptions { get; } = [];
+
+		public async Task<StoryblokContentDeliveryResult<TResponse>> GetOrCreate<TResponse>(
+			StoryblokRegion region,
+			StoryblokContentDeliveryRequest request,
+			Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
+			StoryblokContentDeliveryCacheEntryOptions? options = null,
+			CancellationToken cancellationToken = default)
+		{
+			ReceivedOptions.Add(options);
+			return await valueFactory(cancellationToken).ConfigureAwait(false);
+		}
+
+		public Task Clear(StoryblokRegion region, StoryblokContentDeliveryRequest request, CancellationToken cancellationToken = default)
+		{
+			return Task.CompletedTask;
+		}
+
+		public Task ClearByTag(string tag, CancellationToken cancellationToken = default)
+		{
+			return Task.CompletedTask;
+		}
+
+		public Task ClearAll(CancellationToken cancellationToken = default)
+		{
+			return Task.CompletedTask;
+		}
 	}
 }

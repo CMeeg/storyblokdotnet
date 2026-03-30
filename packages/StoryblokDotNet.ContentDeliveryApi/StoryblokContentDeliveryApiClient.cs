@@ -55,7 +55,7 @@ public sealed class StoryblokContentDeliveryApiClient
 
 		this.httpClientFactory = httpClientFactory;
 		this.cache = cache;
-		this.defaultCacheOptions = CloneCacheOptions(options.Cache);
+		this.defaultCacheOptions = options.Cache;
 
 		Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> resolvedDefaultsByRegion = [];
 
@@ -65,7 +65,7 @@ public sealed class StoryblokContentDeliveryApiClient
 			{
 				Region = clientOptions.Region,
 				Token = clientOptions.Token,
-				Cache = CloneCacheOptions(clientOptions.Cache),
+				Cache = clientOptions.Cache,
 			};
 		}
 
@@ -160,7 +160,7 @@ public sealed class StoryblokContentDeliveryApiClient
 			: new StoryblokContentDeliveryHttpClientOptions
 			{
 				Region = resolvedRegion,
-				Cache = CloneCacheOptions(defaultCacheOptions),
+				Cache = defaultCacheOptions,
 			};
 
 		return Create(options);
@@ -185,7 +185,7 @@ public sealed class StoryblokContentDeliveryApiClient
 		{
 			Region = options.Region,
 			Token = options.Token,
-			Cache = CloneCacheOptions(options.Cache),
+			Cache = options.Cache,
 		};
 
 		HttpClient httpClient = httpClientFactory();
@@ -211,22 +211,16 @@ public sealed class StoryblokContentDeliveryApiClient
 			region);
 	}
 
-	private static StoryblokContentDeliveryCacheOptions CloneCacheOptions(StoryblokContentDeliveryCacheOptions options)
-	{
-		ArgumentNullException.ThrowIfNull(options);
-
-		return new StoryblokContentDeliveryCacheOptions
-		{
-			UseCache = options.UseCache,
-			CvTtl = options.CvTtl,
-		};
-	}
-
 	public Task Clear(StoryblokContentDeliveryRequest request, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
 		return contentDeliveryHttpClient.Clear(request, cancellationToken);
+	}
+
+	public Task ClearCvCache(CancellationToken cancellationToken = default)
+	{
+		return contentDeliveryHttpClient.ClearByTag(StoryblokContentDeliveryHttpClient.CvCacheTag, cancellationToken);
 	}
 
 	public Task ClearByTag(string tag, CancellationToken cancellationToken = default)

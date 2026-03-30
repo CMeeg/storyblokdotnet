@@ -371,6 +371,17 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	}
 
 	[Fact]
+	public async Task ClearCvCache_WithoutArguments_DelegatesToInternalCvTag()
+	{
+		RecordingApiCache cache = new();
+		StoryblokContentDeliveryApiClient sut = new("TOKEN", cache);
+
+		await sut.ClearCvCache(TestContext.Current.CancellationToken);
+
+		Assert.Equal(StoryblokContentDeliveryHttpClient.CvCacheTag, cache.ClearedTag);
+	}
+
+	[Fact]
 	public async Task ClearAll_DelegatesToCache()
 	{
 		RecordingApiCache cache = new();

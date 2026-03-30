@@ -102,7 +102,7 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 		StoryblokContentDeliveryCacheEntryOptions cacheOptions = new();
 		cacheOptions.Tags.Add("space");
 
-		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await sut.RetrieveCurrentSpace(cacheOptions: cacheOptions, cancellationToken: TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await sut.RetrieveCurrentSpace(cacheEntryOptions: cacheOptions, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.True(response.IsSuccess);
 		Assert.Same(cacheOptions, cache.ReceivedOptions);
