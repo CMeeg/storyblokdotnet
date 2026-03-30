@@ -96,32 +96,6 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	}
 
 	[Fact]
-	public void Constructor_WithTokenAndHttpClientFactory_UsesFactory()
-	{
-		RecordingHttpClientFactory httpClientFactory = new();
-		StoryblokContentDeliveryApiClient sut = new("TOKEN", httpClientFactory);
-
-		_ = sut.Spaces();
-
-		Assert.Contains(StoryblokContentDeliveryApiClient.HttpClientName, httpClientFactory.ClientNames);
-	}
-
-	[Fact]
-	public void Constructor_WithTokenAndHttpClientFactoryFunction_UsesFunction()
-	{
-		int invocationCount = 0;
-		StoryblokContentDeliveryApiClient sut = new("TOKEN", () =>
-		{
-			invocationCount++;
-			return new HttpClient();
-		});
-
-		_ = sut.Spaces();
-
-		Assert.Equal(1, invocationCount);
-	}
-
-	[Fact]
 	public void Constructor_WithClientOptions_UsesOptionsRegionAndToken()
 	{
 		StoryblokContentDeliveryHttpClientOptions client = new()
@@ -133,34 +107,6 @@ public sealed class StoryblokContentDeliveryApiClientTests
 
 		Assert.Equal(client.Region, sut.Region);
 		Assert.Equal(client.Token, sut.Token);
-	}
-
-	[Fact]
-	public void Constructor_WithClientOptionsAndHttpClientFactory_UsesFactory()
-	{
-		RecordingHttpClientFactory httpClientFactory = new();
-		StoryblokContentDeliveryHttpClientOptions client = new() { Token = "TOKEN" };
-		StoryblokContentDeliveryApiClient sut = new(client, httpClientFactory);
-
-		_ = sut.Spaces();
-
-		Assert.Contains(StoryblokContentDeliveryApiClient.HttpClientName, httpClientFactory.ClientNames);
-	}
-
-	[Fact]
-	public void Constructor_WithClientOptionsAndHttpClientFactoryFunction_UsesFunction()
-	{
-		int invocationCount = 0;
-		StoryblokContentDeliveryHttpClientOptions client = new() { Token = "TOKEN" };
-		StoryblokContentDeliveryApiClient sut = new(client, () =>
-		{
-			invocationCount++;
-			return new HttpClient();
-		});
-
-		_ = sut.Spaces();
-
-		Assert.Equal(1, invocationCount);
 	}
 
 	[Fact]
@@ -242,28 +188,9 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	}
 
 	[Fact]
-	public void Constructor_WithHttpClientFactoryFunction_UsesFunctionToCreateClient()
-	{
-		int invocationCount = 0;
-		StoryblokContentDeliveryApiClient sut = new(
-			new StoryblokContentDeliveryApiOptions(new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }),
-			() =>
-			{
-				invocationCount++;
-				return new HttpClient();
-			},
-			StoryblokContentDeliveryNoOpApiCache.Instance);
-
-		_ = sut.Spaces();
-
-		Assert.Equal(1, invocationCount);
-		Assert.Equal(StoryblokRegion.Eu, sut.Region);
-	}
-
-	[Fact]
 	public void ForRegion_WithSameRegionRequestedTwice_ReusesTypedClientInstance()
 	{
-		int invocationCount = 0;
+		RecordingHttpClientFactory httpClientFactory = new();
 		List<StoryblokContentDeliveryHttpClientOptions> clients =
 		[
 			new StoryblokContentDeliveryHttpClientOptions
@@ -274,18 +201,42 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		];
 		StoryblokContentDeliveryApiClient sut = new(
 			new StoryblokContentDeliveryApiOptions(clients),
-			() =>
-			{
-				invocationCount++;
-				return new HttpClient();
-			},
+			httpClientFactory,
 			StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		StoryblokContentDeliveryApiClient first = sut.ForRegion(StoryblokRegion.Canada);
 		StoryblokContentDeliveryApiClient second = sut.ForRegion(StoryblokRegion.Canada);
 
 		Assert.Same(first, second);
-		Assert.Equal(1, invocationCount);
+		Assert.Single(httpClientFactory.ClientNames);
+	}
+
+	[Fact]
+	public void ForRegion_WithSharedHttpClientFactoryAndConflictingBaseAddress_ThrowsInvalidOperationException()
+	{
+		using HttpClient sharedClient = new();
+		SharedHttpClientFactory httpClientFactory = new(sharedClient);
+		List<StoryblokContentDeliveryHttpClientOptions> clients =
+		[
+			new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = StoryblokRegion.Eu,
+				Token = "eu-token",
+			},
+			new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = StoryblokRegion.Us,
+				Token = "us-token",
+			},
+		];
+		StoryblokContentDeliveryApiClient sut = new(
+			new StoryblokContentDeliveryApiOptions(clients),
+			httpClientFactory,
+			StoryblokContentDeliveryNoOpApiCache.Instance);
+
+		InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => sut.ForRegion(StoryblokRegion.Us));
+
+		Assert.Contains("already configured with base address", exception.Message, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -428,6 +379,21 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		{
 			ClearAllInvocations++;
 			return Task.CompletedTask;
+		}
+	}
+
+	private sealed class SharedHttpClientFactory : IHttpClientFactory
+	{
+		private readonly HttpClient sharedHttpClient;
+
+		public SharedHttpClientFactory(HttpClient sharedHttpClient)
+		{
+			this.sharedHttpClient = sharedHttpClient;
+		}
+
+		public HttpClient CreateClient(string name)
+		{
+			return sharedHttpClient;
 		}
 	}
 }

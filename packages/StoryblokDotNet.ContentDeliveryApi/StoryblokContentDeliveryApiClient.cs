@@ -8,6 +8,7 @@ namespace StoryblokDotNet.ContentDeliveryApi;
 public sealed class StoryblokContentDeliveryApiClient
 {
 	public const string HttpClientName = "StoryblokContentDeliveryApi";
+	private static readonly IHttpClientFactory DefaultFactory = new DefaultHttpClientFactory();
 
 	private static readonly Uri EuBaseAddress = new("https://api.storyblok.com/v2/cdn", UriKind.Absolute);
 	private static readonly Uri UsBaseAddress = new("https://api-us.storyblok.com/v2/cdn", UriKind.Absolute);
@@ -43,7 +44,7 @@ public sealed class StoryblokContentDeliveryApiClient
 	{
 	}
 
-	public StoryblokContentDeliveryApiClient(
+	private StoryblokContentDeliveryApiClient(
 		StoryblokContentDeliveryApiOptions options,
 		Func<HttpClient> httpClientFactory,
 		IStoryblokContentDeliveryApiCache cache)
@@ -79,46 +80,20 @@ public sealed class StoryblokContentDeliveryApiClient
 	public StoryblokContentDeliveryApiClient(
 		string token,
 		IStoryblokContentDeliveryApiCache? cache = null)
-		: this(new StoryblokContentDeliveryApiOptions(token ?? throw new ArgumentNullException(nameof(token))), static () => new HttpClient(), cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
-	{
-	}
-
-	public StoryblokContentDeliveryApiClient(
-		string token,
-		IHttpClientFactory httpClientFactory,
-		IStoryblokContentDeliveryApiCache? cache = null)
-		: this(new StoryblokContentDeliveryApiOptions(token ?? throw new ArgumentNullException(nameof(token))), httpClientFactory, cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
-	{
-	}
-
-	public StoryblokContentDeliveryApiClient(
-		string token,
-		Func<HttpClient> httpClientFactory,
-		IStoryblokContentDeliveryApiCache? cache = null)
-		: this(new StoryblokContentDeliveryApiOptions(token ?? throw new ArgumentNullException(nameof(token))), httpClientFactory, cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
+		: this(
+			new StoryblokContentDeliveryApiOptions(token ?? throw new ArgumentNullException(nameof(token))),
+			DefaultFactory,
+			cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
 	{
 	}
 
 	public StoryblokContentDeliveryApiClient(
 		StoryblokContentDeliveryHttpClientOptions client,
 		IStoryblokContentDeliveryApiCache? cache = null)
-		: this(new StoryblokContentDeliveryApiOptions(client ?? throw new ArgumentNullException(nameof(client))), static () => new HttpClient(), cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
-	{
-	}
-
-	public StoryblokContentDeliveryApiClient(
-		StoryblokContentDeliveryHttpClientOptions client,
-		IHttpClientFactory httpClientFactory,
-		IStoryblokContentDeliveryApiCache? cache = null)
-		: this(new StoryblokContentDeliveryApiOptions(client ?? throw new ArgumentNullException(nameof(client))), httpClientFactory, cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
-	{
-	}
-
-	public StoryblokContentDeliveryApiClient(
-		StoryblokContentDeliveryHttpClientOptions client,
-		Func<HttpClient> httpClientFactory,
-		IStoryblokContentDeliveryApiCache? cache = null)
-		: this(new StoryblokContentDeliveryApiOptions(client ?? throw new ArgumentNullException(nameof(client))), httpClientFactory, cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
+		: this(
+			new StoryblokContentDeliveryApiOptions(client ?? throw new ArgumentNullException(nameof(client))),
+			DefaultFactory,
+			cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
 	{
 	}
 
@@ -189,7 +164,15 @@ public sealed class StoryblokContentDeliveryApiClient
 		};
 
 		HttpClient httpClient = httpClientFactory();
-		httpClient.BaseAddress = GetBaseAddress(resolvedOptions.Region);
+		Uri expectedBaseAddress = GetBaseAddress(resolvedOptions.Region);
+		Uri? configuredBaseAddress = httpClient.BaseAddress;
+
+		if (configuredBaseAddress is not null && configuredBaseAddress != expectedBaseAddress)
+		{
+			throw new InvalidOperationException($"The provided HttpClient instance is already configured with base address '{configuredBaseAddress}', but region '{resolvedOptions.Region}' requires '{expectedBaseAddress}'. Ensure the factory returns a region-specific HttpClient instance.");
+		}
+
+		httpClient.BaseAddress = expectedBaseAddress;
 
 		return new StoryblokContentDeliveryHttpClient(httpClient, resolvedOptions, cache);
 	}
@@ -247,4 +230,12 @@ public sealed class StoryblokContentDeliveryApiClient
 		StoryblokRegion.China => ChinaBaseAddress,
 		_ => throw new ArgumentOutOfRangeException(nameof(region), region, null),
 	};
+
+	private sealed class DefaultHttpClientFactory : IHttpClientFactory
+	{
+		public HttpClient CreateClient(string name)
+		{
+			return new HttpClient();
+		}
+	}
 }

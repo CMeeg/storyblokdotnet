@@ -99,6 +99,34 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 	}
 
 	[Fact]
+	public async Task Get_WithNonNullQueryValues_EmitsAllValuesIncludingEmptyStrings()
+	{
+		using RecordingHttpMessageHandler handler = new(_ => CreateJsonResponse("{}"));
+		using HttpClient httpClient = new(handler)
+		{
+			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
+		};
+		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
+		{
+			Token = string.Empty,
+		});
+		StoryblokContentDeliveryRequest request = new("/spaces/me", new ParameterPassthroughQuery(
+			new KeyValuePair<string, string?>("token", string.Empty),
+			new KeyValuePair<string, string?>("draft", string.Empty),
+			new KeyValuePair<string, string?>("name", "storyblok"),
+			new KeyValuePair<string, string?>("skip", null)));
+
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
+
+		Assert.True(response.IsSuccess);
+		Assert.NotNull(handler.RequestUri);
+		Assert.Contains("token=", handler.RequestUri!.Query, StringComparison.Ordinal);
+		Assert.Contains("draft=", handler.RequestUri.Query, StringComparison.Ordinal);
+		Assert.Contains("name=storyblok", handler.RequestUri.Query, StringComparison.Ordinal);
+		Assert.DoesNotContain("skip", handler.RequestUri.Query, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public async Task Get_WithoutCv_ResolvesCvFromCurrentSpaceAndAppendsCvParameter()
 	{
 		using RecordingHttpMessageHandler handler = new(request =>
@@ -394,6 +422,21 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		public Task ClearAll(CancellationToken cancellationToken = default)
 		{
 			return Task.CompletedTask;
+		}
+	}
+
+	private sealed class ParameterPassthroughQuery : StoryblokContentDeliveryQuery
+	{
+		private readonly IReadOnlyList<KeyValuePair<string, string?>> parameters;
+
+		public ParameterPassthroughQuery(params KeyValuePair<string, string?>[] parameters)
+		{
+			this.parameters = parameters;
+		}
+
+		public override IEnumerable<KeyValuePair<string, string?>> GetParameters()
+		{
+			return parameters;
 		}
 	}
 }

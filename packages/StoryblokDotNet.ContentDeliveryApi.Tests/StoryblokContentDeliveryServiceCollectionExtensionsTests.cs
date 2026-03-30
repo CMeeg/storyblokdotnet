@@ -22,25 +22,17 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	}
 
 	[Fact]
-	public void AddStoryblokContentDeliveryApi_WithOptions_UsesConfiguredRegionForRegisteredApiClient()
-	{
-		ServiceCollection services = new();
-		services.AddStoryblokContentDeliveryApi(new StoryblokContentDeliveryHttpClientOptions
-		{
-			Region = StoryblokRegion.Us,
-		});
-
-		using ServiceProvider serviceProvider = services.BuildServiceProvider();
-		StoryblokContentDeliveryApiClient apiClient = serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>();
-
-		Assert.Equal(StoryblokRegion.Us, apiClient.Region);
-	}
-
-	[Fact]
 	public void AddStoryblokContentDeliveryApi_WithConfigureDelegate_UsesConfiguredRegionForRegisteredApiClient()
 	{
 		ServiceCollection services = new();
-		services.AddStoryblokContentDeliveryApi(options => options.Region = StoryblokRegion.China);
+		services.AddStoryblokContentDeliveryApi(options =>
+		{
+			options.Clients.Clear();
+			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = StoryblokRegion.China,
+			});
+		});
 
 		using ServiceProvider serviceProvider = services.BuildServiceProvider();
 		StoryblokContentDeliveryApiClient apiClient = serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>();
@@ -73,7 +65,14 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	public void AddStoryblokContentDeliveryApi_WithInvalidRegion_ThrowsOptionsValidationException()
 	{
 		ServiceCollection services = new();
-		services.AddStoryblokContentDeliveryApi(options => options.Region = (StoryblokRegion)999);
+		services.AddStoryblokContentDeliveryApi(options =>
+		{
+			options.Clients.Clear();
+			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = (StoryblokRegion)999,
+			});
+		});
 
 		using ServiceProvider serviceProvider = services.BuildServiceProvider();
 
@@ -132,31 +131,6 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	}
 
 	[Fact]
-	public void AddStoryblokContentDeliveryApi_WithOptionsPattern_DuplicateRegionsThrowOptionsValidationException()
-	{
-		ServiceCollection services = new();
-		services
-			.AddOptions<StoryblokContentDeliveryApiOptions>()
-			.Configure(options =>
-			{
-				options.Clients.Clear();
-				options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
-				{
-					Region = StoryblokRegion.China,
-				});
-				options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
-				{
-					Region = StoryblokRegion.China,
-				});
-			});
-		services.AddStoryblokContentDeliveryApi();
-
-		using ServiceProvider serviceProvider = services.BuildServiceProvider();
-
-		Assert.Throws<OptionsValidationException>(() => serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>());
-	}
-
-	[Fact]
 	public void AddStoryblokContentDeliveryApi_WithSingleConfiguredClient_UnconfiguredKeyedClientThrowsInvalidOperationException()
 	{
 		ServiceCollection services = new();
@@ -167,7 +141,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
 			() => serviceProvider.GetRequiredKeyedService<StoryblokContentDeliveryApiClient>(StoryblokRegion.Us));
 
-		Assert.Contains("No Storyblok client configuration was supplied for region 'Us'.", exception.Message, StringComparison.Ordinal);
+		Assert.Contains("No keyed service for type", exception.Message, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -300,13 +274,113 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		int keyedApiClientRegistrations = services.Count(serviceDescriptor =>
 			serviceDescriptor.ServiceType == typeof(StoryblokContentDeliveryApiClient)
 			&& serviceDescriptor.ServiceKey is StoryblokRegion);
+		int optionsConfigureRegistrations = services.Count(serviceDescriptor =>
+			serviceDescriptor.ServiceType == typeof(IConfigureOptions<StoryblokContentDeliveryApiOptions>));
+		int optionsPostConfigureRegistrations = services.Count(serviceDescriptor =>
+			serviceDescriptor.ServiceType == typeof(IPostConfigureOptions<StoryblokContentDeliveryApiOptions>));
 		int apiOptionsValidatorRegistrations = services.Count(serviceDescriptor =>
 			serviceDescriptor.ServiceType == typeof(IValidateOptions<StoryblokContentDeliveryApiOptions>));
 		int cacheRegistrations = services.Count(serviceDescriptor => serviceDescriptor.ServiceType == typeof(IStoryblokContentDeliveryApiCache));
 
 		Assert.Equal(1, unkeyedApiClientRegistrations);
-		Assert.Equal(StoryblokContentDeliveryApiClient.Regions.Count, keyedApiClientRegistrations);
+		Assert.Equal(1, keyedApiClientRegistrations);
+		Assert.Equal(1, optionsConfigureRegistrations);
+		Assert.Equal(1, optionsPostConfigureRegistrations);
 		Assert.Equal(1, apiOptionsValidatorRegistrations);
 		Assert.Equal(1, cacheRegistrations);
+	}
+
+	[Fact]
+	public void AddStoryblokContentDeliveryApi_WithExternalConfigure_PreservesExternalContributor()
+	{
+		ServiceCollection services = new();
+		services.Configure<StoryblokContentDeliveryApiOptions>(options =>
+		{
+			options.Resilience.MaxRetryAttempts = 12;
+		});
+
+		services.AddStoryblokContentDeliveryApi(options =>
+		{
+			options.Resilience.MaxRetryAttempts = 3;
+		});
+
+		int configureContributorCount = services.Count(serviceDescriptor =>
+			serviceDescriptor.ServiceType == typeof(IConfigureOptions<StoryblokContentDeliveryApiOptions>));
+
+		using ServiceProvider serviceProvider = services.BuildServiceProvider();
+		IOptions<StoryblokContentDeliveryApiOptions> options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>();
+
+		Assert.Equal(2, configureContributorCount);
+		Assert.Equal(3, options.Value.Resilience.MaxRetryAttempts);
+	}
+
+	[Fact]
+	public void AddStoryblokContentDeliveryApi_WithExternalPostConfigure_PreservesExternalContributorAcrossRepeatedRegistration()
+	{
+		ServiceCollection services = new();
+
+		services.AddStoryblokContentDeliveryApi(options =>
+		{
+			options.Resilience.MaxRetryAttempts = 2;
+		});
+
+		services.PostConfigure<StoryblokContentDeliveryApiOptions>(options =>
+		{
+			options.Resilience.MaxRetryAttempts = 11;
+		});
+
+		services.AddStoryblokContentDeliveryApi(options =>
+		{
+			options.Resilience.MaxRetryAttempts = 5;
+		});
+
+		using ServiceProvider serviceProvider = services.BuildServiceProvider();
+		IOptions<StoryblokContentDeliveryApiOptions> options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>();
+
+		Assert.Equal(11, options.Value.Resilience.MaxRetryAttempts);
+	}
+
+	[Fact]
+	public void AddStoryblokContentDeliveryApi_CalledTwiceWithDifferentCacheSettings_UsesLastCallCacheConfiguration()
+	{
+		ServiceCollection services = new();
+
+		services.AddStoryblokContentDeliveryApi();
+		services.AddStoryblokContentDeliveryApi(options => options.Cache.UseCache = false);
+
+		using ServiceProvider serviceProvider = services.BuildServiceProvider();
+		IStoryblokContentDeliveryApiCache cache = serviceProvider.GetRequiredService<IStoryblokContentDeliveryApiCache>();
+
+		Assert.IsType<StoryblokContentDeliveryNoOpApiCache>(cache);
+	}
+
+	[Fact]
+	public void AddStoryblokContentDeliveryApi_CalledTwiceWithDifferentRegions_RegistersOnlyLatestConfiguredKeyedRegions()
+	{
+		ServiceCollection services = new();
+
+		services.AddStoryblokContentDeliveryApi(options =>
+		{
+			options.Clients.Clear();
+			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = StoryblokRegion.Eu,
+			});
+		});
+
+		services.AddStoryblokContentDeliveryApi(options =>
+		{
+			options.Clients.Clear();
+			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			{
+				Region = StoryblokRegion.Us,
+			});
+		});
+
+		using ServiceProvider serviceProvider = services.BuildServiceProvider();
+		StoryblokContentDeliveryApiClient usClient = serviceProvider.GetRequiredKeyedService<StoryblokContentDeliveryApiClient>(StoryblokRegion.Us);
+
+		Assert.Equal(StoryblokRegion.Us, usClient.Region);
+		Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredKeyedService<StoryblokContentDeliveryApiClient>(StoryblokRegion.Eu));
 	}
 }

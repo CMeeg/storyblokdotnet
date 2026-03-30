@@ -14,49 +14,9 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 	{
 		ArgumentNullException.ThrowIfNull(services);
 
-		return AddStoryblokContentDeliveryApiCore(services, new StoryblokContentDeliveryCacheOptions());
-	}
-
-	public static IServiceCollection AddStoryblokContentDeliveryApi(
-		this IServiceCollection services,
-		StoryblokContentDeliveryHttpClientOptions? options = null)
-	{
-		ArgumentNullException.ThrowIfNull(services);
-
-		StoryblokContentDeliveryHttpClientOptions resolvedOptions = options ?? new StoryblokContentDeliveryHttpClientOptions();
-
-		AddStoryblokContentDeliveryApiCore(services, new StoryblokContentDeliveryCacheOptions());
-
-		services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions =>
+		return AddStoryblokContentDeliveryApi(services, static _ =>
 		{
-			configuredOptions.Clients.Clear();
-			configuredOptions.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
-			{
-				Region = resolvedOptions.Region,
-				Token = resolvedOptions.Token,
-			});
 		});
-
-		return services;
-	}
-
-	public static IServiceCollection AddStoryblokContentDeliveryApi(
-		this IServiceCollection services,
-		Action<StoryblokContentDeliveryHttpClientOptions> configureOptions)
-	{
-		ArgumentNullException.ThrowIfNull(services);
-		ArgumentNullException.ThrowIfNull(configureOptions);
-
-		AddStoryblokContentDeliveryApiCore(services, new StoryblokContentDeliveryCacheOptions());
-		services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions =>
-		{
-			configuredOptions.Clients.Clear();
-			StoryblokContentDeliveryHttpClientOptions defaultClientOptions = new();
-			configureOptions(defaultClientOptions);
-			configuredOptions.Clients.Add(defaultClientOptions);
-		});
-
-		return services;
 	}
 
 	public static IServiceCollection AddStoryblokContentDeliveryApi(
@@ -69,11 +29,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		StoryblokContentDeliveryApiOptions resolvedOptions = new();
 		configureOptions(resolvedOptions);
 
-		AddStoryblokContentDeliveryApiCore(services, resolvedOptions.Cache);
-
-		services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions => CopyOptions(resolvedOptions, configuredOptions));
-
-		return services;
+		return AddStoryblokContentDeliveryApiCore(services, resolvedOptions);
 	}
 
 	public static IServiceCollection AddStoryblokContentDeliveryApi(
@@ -83,42 +39,35 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		ArgumentNullException.ThrowIfNull(services);
 		ArgumentNullException.ThrowIfNull(configuration);
 
-		StoryblokContentDeliveryCacheOptions cacheOptions = new();
-		IConfigurationSection cacheSection = configuration.GetSection(nameof(StoryblokContentDeliveryApiOptions.Cache));
-		if (cacheSection.Exists())
-		{
-			cacheSection.Bind(cacheOptions);
-		}
-
-		AddStoryblokContentDeliveryApiCore(services, cacheOptions);
+		StoryblokContentDeliveryApiOptions resolvedOptions = new();
 
 		if (configuration.GetSection("Clients").Exists())
 		{
-			services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions =>
-			{
-				configuredOptions.Clients.Clear();
-				configuration.Bind(configuredOptions);
-			});
+			resolvedOptions.Clients.Clear();
+			configuration.Bind(resolvedOptions);
 		}
 		else
 		{
-			services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions =>
+			resolvedOptions.Clients.Clear();
+
+			StoryblokContentDeliveryHttpClientOptions defaultClientOptions = new();
+			configuration.Bind(defaultClientOptions);
+			resolvedOptions.Clients.Add(defaultClientOptions);
+
+			IConfigurationSection resilienceSection = configuration.GetSection(nameof(StoryblokContentDeliveryApiOptions.Resilience));
+			if (resilienceSection.Exists())
 			{
-				configuredOptions.Clients.Clear();
+				resilienceSection.Bind(resolvedOptions.Resilience);
+			}
 
-				StoryblokContentDeliveryHttpClientOptions defaultClientOptions = new();
-				configuration.Bind(defaultClientOptions);
-				configuredOptions.Clients.Add(defaultClientOptions);
-
-				IConfigurationSection resilienceSection = configuration.GetSection(nameof(StoryblokContentDeliveryApiOptions.Resilience));
-				if (resilienceSection.Exists())
-				{
-					resilienceSection.Bind(configuredOptions.Resilience);
-				}
-			});
+			IConfigurationSection cacheSection = configuration.GetSection(nameof(StoryblokContentDeliveryApiOptions.Cache));
+			if (cacheSection.Exists())
+			{
+				cacheSection.Bind(resolvedOptions.Cache);
+			}
 		}
 
-		return services;
+		return AddStoryblokContentDeliveryApiCore(services, resolvedOptions);
 	}
 
 	private static void CopyOptions(
@@ -155,14 +104,9 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 
 	private static IServiceCollection AddStoryblokContentDeliveryApiCore(
 		IServiceCollection services,
-		StoryblokContentDeliveryCacheOptions cacheOptions)
+		StoryblokContentDeliveryApiOptions options)
 	{
-		ArgumentNullException.ThrowIfNull(cacheOptions);
-
-		if (services.Any(static serviceDescriptor => serviceDescriptor.ServiceType == typeof(StoryblokContentDeliveryApiRegistrationMarker)))
-		{
-			return services;
-		}
+		ArgumentNullException.ThrowIfNull(options);
 
 		services
 			.AddOptions<StoryblokContentDeliveryApiOptions>()
@@ -170,62 +114,88 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 
 		services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<StoryblokContentDeliveryApiOptions>, StoryblokContentDeliveryApiOptionsValidator>());
 
-		if (cacheOptions.UseCache && services.All(static serviceDescriptor => serviceDescriptor.ServiceType != typeof(HybridCache)))
+		RemoveStoryblokOptionsContributors(services);
+		services.AddSingleton<IConfigureOptions<StoryblokContentDeliveryApiOptions>>(new StoryblokContentDeliveryApiOptionsSetup(options));
+		services.AddSingleton<IPostConfigureOptions<StoryblokContentDeliveryApiOptions>>(new StoryblokContentDeliveryApiOptionsPostSetup());
+
+		services.RemoveAll<IStoryblokContentDeliveryApiCache>();
+
+		if (options.Cache.UseCache && services.All(static serviceDescriptor => serviceDescriptor.ServiceType != typeof(HybridCache)))
 		{
 			services.AddHybridCache();
 		}
 
-		if (cacheOptions.UseCache)
+		if (options.Cache.UseCache)
 		{
-			services.TryAddSingleton<IStoryblokContentDeliveryApiCache>(serviceProvider =>
+			services.AddSingleton<IStoryblokContentDeliveryApiCache>(serviceProvider =>
 			{
 				HybridCache hybridCache = serviceProvider.GetRequiredService<HybridCache>();
-				IOptions<HybridCacheOptions>? options = serviceProvider.GetService<IOptions<HybridCacheOptions>>();
-				return new StoryblokContentDeliveryApiHybridCache(hybridCache, options);
+				IOptions<HybridCacheOptions>? hybridCacheOptions = serviceProvider.GetService<IOptions<HybridCacheOptions>>();
+				return new StoryblokContentDeliveryApiHybridCache(hybridCache, hybridCacheOptions);
 			});
 		}
 		else
 		{
-			services.TryAddSingleton<IStoryblokContentDeliveryApiCache>(StoryblokContentDeliveryNoOpApiCache.Instance);
+			services.AddSingleton<IStoryblokContentDeliveryApiCache>(StoryblokContentDeliveryNoOpApiCache.Instance);
 		}
 
-		services.AddHttpClient(StoryblokContentDeliveryApiClient.HttpClientName)
-			.AddStoryblokContentDeliveryResilience();
+		if (services.All(static serviceDescriptor => serviceDescriptor.ServiceType != typeof(StoryblokContentDeliveryApiHttpClientRegistrationMarker)))
+		{
+			services.AddHttpClient(StoryblokContentDeliveryApiClient.HttpClientName)
+				.AddStoryblokContentDeliveryResilience();
 
-		services.TryAddSingleton(serviceProvider =>
+			services.AddSingleton<StoryblokContentDeliveryApiHttpClientRegistrationMarker>();
+		}
+
+		for (int index = services.Count - 1; index >= 0; index--)
+		{
+			if (services[index].ServiceType == typeof(StoryblokContentDeliveryApiClient))
+			{
+				services.RemoveAt(index);
+			}
+		}
+
+		services.AddSingleton(serviceProvider =>
 		{
 			IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-			StoryblokContentDeliveryApiOptions options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
+			StoryblokContentDeliveryApiOptions resolvedOptions = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
 			IStoryblokContentDeliveryApiCache cache = serviceProvider.GetRequiredService<IStoryblokContentDeliveryApiCache>();
-			return new StoryblokContentDeliveryApiClient(options, httpClientFactory, cache);
+			return new StoryblokContentDeliveryApiClient(resolvedOptions, httpClientFactory, cache);
 		});
 
-		foreach (StoryblokRegion region in StoryblokContentDeliveryApiClient.Regions)
+		foreach (StoryblokRegion region in options.Clients.Select(static client => client.Region).Distinct())
 		{
+			StoryblokRegion resolvedRegion = region;
 			services.AddKeyedSingleton<StoryblokContentDeliveryApiClient>(
-				region,
-				static (serviceProvider, serviceKey) =>
+				resolvedRegion,
+				(serviceProvider, _) =>
 				{
 					StoryblokContentDeliveryApiClient apiClient = serviceProvider.GetRequiredService<StoryblokContentDeliveryApiClient>();
-					StoryblokContentDeliveryApiOptions options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
-					StoryblokRegion resolvedRegion = serviceKey is StoryblokRegion regionKey
-						? regionKey
-						: throw new InvalidOperationException("Storyblok API client service key must be a StoryblokRegion value.");
-					StoryblokContentDeliveryHttpClientOptions? configuredClientOptions = options.Clients.FirstOrDefault(client => client.Region == resolvedRegion);
-					bool hasConfigurationForRegion = configuredClientOptions is not null;
-
-					if (!hasConfigurationForRegion)
-					{
-						throw new InvalidOperationException($"No Storyblok client configuration was supplied for region '{resolvedRegion}'.");
-					}
-
 					return apiClient.ForRegion(resolvedRegion);
 				});
 		}
 
-		services.AddSingleton<StoryblokContentDeliveryApiRegistrationMarker>();
-
 		return services;
+	}
+
+	private static void RemoveStoryblokOptionsContributors(IServiceCollection services)
+	{
+		for (int index = services.Count - 1; index >= 0; index--)
+		{
+			ServiceDescriptor serviceDescriptor = services[index];
+			if (serviceDescriptor.ServiceType == typeof(IConfigureOptions<StoryblokContentDeliveryApiOptions>)
+				&& serviceDescriptor.ImplementationInstance is StoryblokContentDeliveryApiOptionsSetup)
+			{
+				services.RemoveAt(index);
+				continue;
+			}
+
+			if (serviceDescriptor.ServiceType == typeof(IPostConfigureOptions<StoryblokContentDeliveryApiOptions>)
+				&& serviceDescriptor.ImplementationInstance is StoryblokContentDeliveryApiOptionsPostSetup)
+			{
+				services.RemoveAt(index);
+			}
+		}
 	}
 
 	private sealed class StoryblokContentDeliveryApiOptionsValidator : IValidateOptions<StoryblokContentDeliveryApiOptions>
@@ -281,7 +251,29 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		}
 	}
 
-	private sealed class StoryblokContentDeliveryApiRegistrationMarker
+	private sealed class StoryblokContentDeliveryApiHttpClientRegistrationMarker
 	{
+	}
+
+	private sealed class StoryblokContentDeliveryApiOptionsSetup : IConfigureOptions<StoryblokContentDeliveryApiOptions>
+	{
+		private readonly StoryblokContentDeliveryApiOptions sourceOptions;
+
+		public StoryblokContentDeliveryApiOptionsSetup(StoryblokContentDeliveryApiOptions sourceOptions)
+		{
+			this.sourceOptions = sourceOptions;
+		}
+
+		public void Configure(StoryblokContentDeliveryApiOptions options)
+		{
+			CopyOptions(sourceOptions, options);
+		}
+	}
+
+	private sealed class StoryblokContentDeliveryApiOptionsPostSetup : IPostConfigureOptions<StoryblokContentDeliveryApiOptions>
+	{
+		public void PostConfigure(string? name, StoryblokContentDeliveryApiOptions options)
+		{
+		}
 	}
 }

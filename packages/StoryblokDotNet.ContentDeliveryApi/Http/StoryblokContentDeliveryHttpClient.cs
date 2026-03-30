@@ -246,13 +246,13 @@ public sealed class StoryblokContentDeliveryHttpClient
 		foreach (KeyValuePair<string, string?> parameter in request.Query.GetParameters())
 		{
 			if (string.Equals(parameter.Key, "token", StringComparison.OrdinalIgnoreCase)
-				&& !string.IsNullOrWhiteSpace(parameter.Value))
+				&& parameter.Value is not null)
 			{
-				return parameter.Value.Trim();
+				return parameter.Value;
 			}
 		}
 
-		return string.IsNullOrWhiteSpace(Options.Token) ? null : Options.Token;
+		return Options.Token;
 	}
 
 	private static StoryblokContentDeliveryRequest CreateResolvedRequest(
@@ -264,7 +264,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 
 		foreach (KeyValuePair<string, string?> parameter in request.Query.GetParameters())
 		{
-			if (string.IsNullOrWhiteSpace(parameter.Value)
+			if (parameter.Value is null
 				|| string.Equals(parameter.Key, "token", StringComparison.OrdinalIgnoreCase)
 				|| string.Equals(parameter.Key, "cv", StringComparison.OrdinalIgnoreCase))
 			{
@@ -274,7 +274,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 			parameters.Add(parameter);
 		}
 
-		if (!string.IsNullOrWhiteSpace(resolvedToken))
+		if (resolvedToken is not null)
 		{
 			parameters.Add(new KeyValuePair<string, string?>("token", resolvedToken));
 		}
@@ -297,7 +297,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 
 		foreach (KeyValuePair<string, string?> parameter in request.Query.GetParameters())
 		{
-			if (string.IsNullOrWhiteSpace(parameter.Value))
+			if (parameter.Value is null)
 			{
 				continue;
 			}
