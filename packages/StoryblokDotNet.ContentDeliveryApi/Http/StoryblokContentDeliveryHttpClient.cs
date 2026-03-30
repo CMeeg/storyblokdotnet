@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.Extensions;
+using StoryblokDotNet.ContentDeliveryApi.Caching;
 using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Http;
@@ -9,7 +10,7 @@ namespace StoryblokDotNet.ContentDeliveryApi.Http;
 public sealed class StoryblokContentDeliveryHttpClient
 {
 	private readonly HttpClient httpClient;
-	private readonly IStoryblokContentDeliveryCvCache cvCache;
+	private readonly IStoryblokContentDeliveryApiCache cache;
 
 	public StoryblokContentDeliveryHttpClientOptions Options { get; }
 
@@ -18,25 +19,62 @@ public sealed class StoryblokContentDeliveryHttpClient
 	public StoryblokContentDeliveryHttpClient(
 		HttpClient httpClient,
 		StoryblokContentDeliveryHttpClientOptions options,
-		IStoryblokContentDeliveryCvCache? cvCache = null)
+		IStoryblokContentDeliveryApiCache? cache = null)
 	{
 		ArgumentNullException.ThrowIfNull(httpClient);
 		ArgumentNullException.ThrowIfNull(httpClient.BaseAddress);
 		ArgumentNullException.ThrowIfNull(options);
 
 		this.httpClient = httpClient;
-		this.cvCache = cvCache ?? StoryblokContentDeliveryNoOpCvCache.Instance;
+		this.cache = cache ?? StoryblokContentDeliveryNoOpApiCache.Instance;
 
 		Options = options;
 	}
 
 	public async Task<StoryblokContentDeliveryResult<TResponse>> Get<TResponse>(
 		StoryblokContentDeliveryRequest request,
+		StoryblokContentDeliveryCacheOptions? options = null,
 		CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
-		Uri requestUri = await ResolveRequestUriWithCv(request, cancellationToken).ConfigureAwait(false);
+		StoryblokContentDeliveryRequest resolvedRequest = await ResolveRequest(request, options, cancellationToken).ConfigureAwait(false);
+
+		return await cache
+			.GetOrCreate(
+				Options.Region,
+				resolvedRequest,
+				cancel => SendGet<TResponse>(resolvedRequest, cancel),
+				options,
+				cancellationToken)
+			.ConfigureAwait(false);
+	}
+
+	internal async Task Clear(
+		StoryblokContentDeliveryRequest request,
+		CancellationToken cancellationToken = default)
+	{
+		ArgumentNullException.ThrowIfNull(request);
+
+		StoryblokContentDeliveryRequest resolvedRequest = await ResolveRequest(request, options: null, cancellationToken).ConfigureAwait(false);
+		await cache.Clear(Options.Region, resolvedRequest, cancellationToken).ConfigureAwait(false);
+	}
+
+	internal Task ClearByTag(string tag, CancellationToken cancellationToken = default)
+	{
+		return cache.ClearByTag(tag, cancellationToken);
+	}
+
+	internal Task ClearAll(CancellationToken cancellationToken = default)
+	{
+		return cache.ClearAll(cancellationToken);
+	}
+
+	private async Task<StoryblokContentDeliveryResult<TResponse>> SendGet<TResponse>(
+		StoryblokContentDeliveryRequest request,
+		CancellationToken cancellationToken)
+	{
+		Uri requestUri = BuildRequestUri(request);
 		using HttpRequestMessage httpRequest = new(HttpMethod.Get, requestUri);
 
 		try
@@ -121,54 +159,52 @@ public sealed class StoryblokContentDeliveryHttpClient
 		return exception.InnerException is OperationCanceledException;
 	}
 
-	private async Task<Uri> ResolveRequestUriWithCv(
+	private async Task<StoryblokContentDeliveryRequest> ResolveRequest(
 		StoryblokContentDeliveryRequest request,
+		StoryblokContentDeliveryCacheOptions? options,
 		CancellationToken cancellationToken)
 	{
-		if (request.Query.Cv is long queryCv)
+		string? resolvedToken = ResolveToken(request);
+		long? resolvedCv = request.Query.Cv;
+
+		if (resolvedCv is null && !IsRetrieveCurrentSpacePath(request.Path))
 		{
-			return BuildRequestUri(request, queryCv);
+			try
+			{
+				resolvedCv = await GetCurrentSpaceVersion(options, cancellationToken).ConfigureAwait(false);
+			}
+			catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+			{
+				resolvedCv = null;
+			}
+			catch (HttpRequestException)
+			{
+				resolvedCv = null;
+			}
+			catch (JsonException)
+			{
+				resolvedCv = null;
+			}
+			catch (NotSupportedException)
+			{
+				resolvedCv = null;
+			}
+			catch (InvalidOperationException)
+			{
+				resolvedCv = null;
+			}
 		}
 
-		if (IsRetrieveCurrentSpacePath(request.Path))
-		{
-			return BuildRequestUri(request);
-		}
-
-		try
-		{
-			long resolvedCv = await cvCache
-				.GetOrCreateCv(Options.Region, cancel => GetCurrentSpaceVersion(cancel), cancellationToken)
-				.ConfigureAwait(false);
-			return BuildRequestUri(request, resolvedCv);
-		}
-		catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-		{
-			return BuildRequestUri(request);
-		}
-		catch (HttpRequestException)
-		{
-			return BuildRequestUri(request);
-		}
-		catch (JsonException)
-		{
-			return BuildRequestUri(request);
-		}
-		catch (NotSupportedException)
-		{
-			return BuildRequestUri(request);
-		}
-		catch (InvalidOperationException)
-		{
-			return BuildRequestUri(request);
-		}
+		return CreateResolvedRequest(request, resolvedToken, resolvedCv);
 	}
 
-	private async Task<long> GetCurrentSpaceVersion(CancellationToken cancellationToken)
+	private async Task<long> GetCurrentSpaceVersion(
+		StoryblokContentDeliveryCacheOptions? options,
+		CancellationToken cancellationToken)
 	{
 		StoryblokContentDeliverySpacesApi spacesApi = new(this);
 		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await spacesApi
-			.RetrieveCurrentSpace(new RetrieveCurrentSpaceQuery(), cancellationToken)
+			.RetrieveCurrentSpace(new RetrieveCurrentSpaceQuery(), options, cancellationToken)
 			.ConfigureAwait(false);
 
 		if (!response.IsSuccess)
@@ -185,15 +221,59 @@ public sealed class StoryblokContentDeliveryHttpClient
 			|| string.Equals(path?.TrimStart('/').Trim(), RetrieveCurrentSpaceRequest.RetrieveCurrentSpacePath.TrimStart('/'), StringComparison.OrdinalIgnoreCase);
 	}
 
-	private Uri BuildRequestUri(StoryblokContentDeliveryRequest request, long? overrideCv = null)
+	private string? ResolveToken(StoryblokContentDeliveryRequest request)
+	{
+		foreach (KeyValuePair<string, string?> parameter in request.Query.GetParameters())
+		{
+			if (string.Equals(parameter.Key, "token", StringComparison.OrdinalIgnoreCase)
+				&& !string.IsNullOrWhiteSpace(parameter.Value))
+			{
+				return parameter.Value.Trim();
+			}
+		}
+
+		return string.IsNullOrWhiteSpace(Options.Token) ? null : Options.Token;
+	}
+
+	private static StoryblokContentDeliveryRequest CreateResolvedRequest(
+		StoryblokContentDeliveryRequest request,
+		string? resolvedToken,
+		long? resolvedCv)
+	{
+		List<KeyValuePair<string, string?>> parameters = [];
+
+		foreach (KeyValuePair<string, string?> parameter in request.Query.GetParameters())
+		{
+			if (string.IsNullOrWhiteSpace(parameter.Value)
+				|| string.Equals(parameter.Key, "token", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(parameter.Key, "cv", StringComparison.OrdinalIgnoreCase))
+			{
+				continue;
+			}
+
+			parameters.Add(parameter);
+		}
+
+		if (!string.IsNullOrWhiteSpace(resolvedToken))
+		{
+			parameters.Add(new KeyValuePair<string, string?>("token", resolvedToken));
+		}
+
+		if (resolvedCv is long finalCv)
+		{
+			parameters.Add(new KeyValuePair<string, string?>("cv", finalCv.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+		}
+
+		return new StoryblokContentDeliveryRequest(request.Path, new ResolvedStoryblokContentDeliveryQuery(parameters));
+	}
+
+	private Uri BuildRequestUri(StoryblokContentDeliveryRequest request)
 	{
 		ArgumentNullException.ThrowIfNull(request);
 		ArgumentException.ThrowIfNullOrWhiteSpace(request.Path);
 		ArgumentNullException.ThrowIfNull(request.Query);
 
 		QueryBuilder queryBuilder = new();
-		bool hasTokenParameter = false;
-		bool hasCvParameter = false;
 
 		foreach (KeyValuePair<string, string?> parameter in request.Query.GetParameters())
 		{
@@ -202,34 +282,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 				continue;
 			}
 
-			if (string.Equals(parameter.Key, "cv", StringComparison.OrdinalIgnoreCase) && overrideCv is long forcedCv)
-			{
-				queryBuilder.Add("cv", forcedCv.ToString(System.Globalization.CultureInfo.InvariantCulture));
-				hasCvParameter = true;
-				continue;
-			}
-
 			queryBuilder.Add(parameter.Key, parameter.Value);
-
-			if (string.Equals(parameter.Key, "token", StringComparison.OrdinalIgnoreCase))
-			{
-				hasTokenParameter = true;
-			}
-
-			if (string.Equals(parameter.Key, "cv", StringComparison.OrdinalIgnoreCase))
-			{
-				hasCvParameter = true;
-			}
-		}
-
-		if (!hasTokenParameter && !string.IsNullOrWhiteSpace(Options.Token))
-		{
-			queryBuilder.Add("token", Options.Token);
-		}
-
-		if (!hasCvParameter && overrideCv is long finalCv)
-		{
-			queryBuilder.Add("cv", finalCv.ToString(System.Globalization.CultureInfo.InvariantCulture));
 		}
 
 		UriBuilder requestUriBuilder = new(httpClient.BaseAddress!)
@@ -346,5 +399,20 @@ public sealed class StoryblokContentDeliveryHttpClient
 				or HttpStatusCode.GatewayTimeout => StoryblokContentDeliveryErrorCategory.ServerError,
 			_ => StoryblokContentDeliveryErrorCategory.Unknown,
 		};
+	}
+
+	private sealed class ResolvedStoryblokContentDeliveryQuery : StoryblokContentDeliveryQuery
+	{
+		private readonly IReadOnlyList<KeyValuePair<string, string?>> parameters;
+
+		public ResolvedStoryblokContentDeliveryQuery(IReadOnlyList<KeyValuePair<string, string?>> parameters)
+		{
+			this.parameters = parameters;
+		}
+
+		public override IEnumerable<KeyValuePair<string, string?>> GetParameters()
+		{
+			return parameters;
+		}
 	}
 }

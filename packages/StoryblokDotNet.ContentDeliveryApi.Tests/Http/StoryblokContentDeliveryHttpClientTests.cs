@@ -67,7 +67,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		};
 		StoryblokContentDeliveryRequest request = new("/spaces/me", query);
 
-		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.NotNull(handler.RequestUri);
 		Assert.Equal("https://api.storyblok.com/v2/cdn/spaces/me?token=my%20token", handler.RequestUri!.AbsoluteUri);
@@ -90,7 +90,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		RetrieveCurrentSpaceQuery query = new();
 		StoryblokContentDeliveryRequest request = new("/spaces/me", query);
 
-		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.NotNull(handler.RequestUri);
 		Assert.Equal("https://api.storyblok.com/v2/cdn/spaces/me?token=configured-token", handler.RequestUri!.AbsoluteUri);
@@ -125,7 +125,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		});
 		StoryblokContentDeliveryRequest request = new("/stories", new RetrieveCurrentSpaceQuery());
 
-		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.True(response.IsSuccess);
 		Assert.Equal(2, handler.RequestUris.Count);
@@ -160,7 +160,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		});
 		StoryblokContentDeliveryRequest request = new("/stories", new RetrieveCurrentSpaceQuery());
 
-		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.True(response.IsSuccess);
 		Assert.Equal(2, handler.RequestUris.Count);
@@ -186,7 +186,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		};
 		StoryblokContentDeliveryRequest request = new("/stories", query);
 
-		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.True(response.IsSuccess);
 		Assert.Single(handler.RequestUris);
@@ -209,7 +209,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		});
 		StoryblokContentDeliveryRequest request = new("/spaces/me", new RetrieveCurrentSpaceQuery());
 
-		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.True(response.IsSuccess);
 		Assert.Single(handler.RequestUris);
@@ -230,7 +230,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		StoryblokContentDeliveryRequest request = new("/spaces/me", new RetrieveCurrentSpaceQuery());
 
-		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.False(response.IsSuccess);
 		Assert.NotNull(response.Error);
@@ -258,7 +258,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		StoryblokContentDeliveryRequest request = new("/spaces/me", new RetrieveCurrentSpaceQuery());
 
-		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.False(response.IsSuccess);
 		Assert.NotNull(response.Error);
@@ -278,7 +278,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		StoryblokContentDeliveryRequest request = new("/spaces/me", new RetrieveCurrentSpaceQuery());
 
-		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await client.Get<RetrieveCurrentSpaceResponse>(request, TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await client.Get<RetrieveCurrentSpaceResponse>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.False(response.IsSuccess);
 		Assert.NotNull(response.Error);
@@ -299,7 +299,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		await cancellationTokenSource.CancelAsync();
 
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-			client.Get<object>(request, cancellationTokenSource.Token));
+			client.Get<object>(request, cancellationToken: cancellationTokenSource.Token));
 	}
 
 	[Fact]
@@ -313,7 +313,7 @@ public sealed class StoryblokContentDeliveryHttpClientTests
 		StoryblokContentDeliveryHttpClient client = new(httpClient, new StoryblokContentDeliveryHttpClientOptions());
 		StoryblokContentDeliveryRequest request = new("/spaces/me", new RetrieveCurrentSpaceQuery());
 
-		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await client.Get<RetrieveCurrentSpaceResponse>(request, TestContext.Current.CancellationToken);
+		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await client.Get<RetrieveCurrentSpaceResponse>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.False(response.IsSuccess);
 		Assert.NotNull(response.Error);

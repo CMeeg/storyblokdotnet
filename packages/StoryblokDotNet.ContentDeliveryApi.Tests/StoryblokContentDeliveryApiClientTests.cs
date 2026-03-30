@@ -1,4 +1,6 @@
+using StoryblokDotNet.ContentDeliveryApi.Caching;
 using StoryblokDotNet.ContentDeliveryApi.Http;
+using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Tests;
 
@@ -10,7 +12,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryApiClient(
 			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }],
 			(IHttpClientFactory)null!,
-			StoryblokContentDeliveryNoOpCvCache.Instance));
+			StoryblokContentDeliveryNoOpApiCache.Instance));
 	}
 
 	[Fact]
@@ -21,11 +23,11 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryApiClient(
 			(IList<StoryblokContentDeliveryHttpClientOptions>)null!,
 			httpClientFactory,
-			StoryblokContentDeliveryNoOpCvCache.Instance));
+			StoryblokContentDeliveryNoOpApiCache.Instance));
 	}
 
 	[Fact]
-	public void Constructor_WithoutCvCache_ThrowsArgumentNullException()
+	public void Constructor_WithoutCache_ThrowsArgumentNullException()
 	{
 		RecordingHttpClientFactory httpClientFactory = new();
 
@@ -42,7 +44,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		StoryblokContentDeliveryApiClient sut = new(
 			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }],
 			httpClientFactory,
-			StoryblokContentDeliveryNoOpCvCache.Instance);
+			StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		Assert.Equal(StoryblokRegion.Eu, sut.Region);
 		Assert.Equal("TOKEN", sut.Token);
@@ -58,14 +60,16 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	}
 
 	[Fact]
-	public async Task Constructor_WithCvCache_UsesCvCache()
+	public async Task Constructor_WithCache_UsesCache()
 	{
-		RecordingCvCache cvCache = new();
-		StoryblokContentDeliveryApiClient sut = new("TOKEN", cvCache);
+		RecordingApiCache cache = new();
+		StoryblokContentDeliveryApiClient sut = new("TOKEN", cache);
+		RetrieveCurrentSpaceRequest request = new(new RetrieveCurrentSpaceQuery());
 
-		await sut.ClearCv(TestContext.Current.CancellationToken);
+		await sut.Clear(request, TestContext.Current.CancellationToken);
 
-		Assert.Equal(StoryblokRegion.Eu, cvCache.ClearedRegion);
+		Assert.Equal(StoryblokRegion.Eu, cache.ClearedRegion);
+		Assert.NotNull(cache.ClearedRequest);
 	}
 
 	[Fact]
@@ -88,7 +92,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		Assert.Throws<ArgumentOutOfRangeException>(() => new StoryblokContentDeliveryApiClient(
 			[],
 			httpClientFactory,
-			StoryblokContentDeliveryNoOpCvCache.Instance));
+			StoryblokContentDeliveryNoOpApiCache.Instance));
 	}
 
 	[Fact]
@@ -176,7 +180,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 				Token = "eu-token",
 			},
 		];
-		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpCvCache.Instance);
+		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		Assert.Equal(clients.First().Region, sut.Region);
 		Assert.Equal(clients.First().Token, sut.Token);
@@ -189,7 +193,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		StoryblokContentDeliveryApiClient sut = new(
 			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }],
 			httpClientFactory,
-			StoryblokContentDeliveryNoOpCvCache.Instance);
+			StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		StoryblokContentDeliveryApiClient usClient = sut.ForRegion(StoryblokRegion.Us);
 
@@ -204,7 +208,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		StoryblokContentDeliveryApiClient sut = new(
 			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }],
 			httpClientFactory,
-			StoryblokContentDeliveryNoOpCvCache.Instance);
+			StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		StoryblokContentDeliveryApiClient usClient1 = sut.ForRegion(StoryblokRegion.Us);
 		StoryblokContentDeliveryApiClient usClient2 = usClient1.ForRegion(StoryblokRegion.Us);
@@ -229,7 +233,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 				Token = "us-token",
 			},
 		];
-		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpCvCache.Instance);
+		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		StoryblokContentDeliveryApiClient usClient = sut.ForRegion(StoryblokRegion.Us);
 
@@ -248,7 +252,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 				invocationCount++;
 				return new HttpClient();
 			},
-			StoryblokContentDeliveryNoOpCvCache.Instance);
+			StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		_ = sut.Spaces();
 
@@ -275,7 +279,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 				invocationCount++;
 				return new HttpClient();
 			},
-			StoryblokContentDeliveryNoOpCvCache.Instance);
+			StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		StoryblokContentDeliveryApiClient first = sut.ForRegion(StoryblokRegion.Canada);
 		StoryblokContentDeliveryApiClient second = sut.ForRegion(StoryblokRegion.Canada);
@@ -292,7 +296,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		[
 			new StoryblokContentDeliveryHttpClientOptions { Token = "eu-token" },
 		];
-		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpCvCache.Instance);
+		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		StoryblokContentDeliveryApiClient australiaClient = sut.ForRegion(StoryblokRegion.Australia);
 
@@ -308,7 +312,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		[
 			new StoryblokContentDeliveryHttpClientOptions { Token = "eu-token" },
 		];
-		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpCvCache.Instance);
+		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		StoryblokContentDeliveryApiClient euClient = sut;
 		StoryblokContentDeliveryApiClient australiaClient = sut.ForRegion(StoryblokRegion.Australia);
@@ -327,7 +331,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 			Token = "initial-token",
 		};
 		List<StoryblokContentDeliveryHttpClientOptions> clients = [usClientOptions];
-		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpCvCache.Instance);
+		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		usClientOptions.Token = "mutated-token";
 
@@ -337,36 +341,81 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	}
 
 	[Fact]
-	public async Task ClearCv_WithCurrentRegion_ClearsCacheForCurrentRegion()
+	public async Task Clear_WithCurrentRegion_ClearsCacheForCurrentRegion()
 	{
 		RecordingHttpClientFactory httpClientFactory = new();
-		RecordingCvCache cvCache = new();
+		RecordingApiCache cache = new();
 		StoryblokContentDeliveryApiClient baseClient = new(
 			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN", Region = StoryblokRegion.Us }],
 			httpClientFactory,
-			cvCache);
+			cache);
 		StoryblokContentDeliveryApiClient sut = baseClient.ForRegion(StoryblokRegion.Us);
+		RetrieveCurrentSpaceRequest request = new(new RetrieveCurrentSpaceQuery());
 
-		await sut.ClearCv(TestContext.Current.CancellationToken);
+		await sut.Clear(request, TestContext.Current.CancellationToken);
 
-		Assert.Equal(StoryblokRegion.Us, cvCache.ClearedRegion);
+		Assert.Equal(StoryblokRegion.Us, cache.ClearedRegion);
+		Assert.Equal(RetrieveCurrentSpaceRequest.RetrieveCurrentSpacePath, cache.ClearedRequest!.Path);
+		Assert.Contains(cache.ClearedRequest.Query.GetParameters(), parameter => parameter.Key == "token" && parameter.Value == "TOKEN");
 	}
 
-	private sealed class RecordingCvCache : IStoryblokContentDeliveryCvCache
+	[Fact]
+	public async Task ClearByTag_WithTag_DelegatesToCache()
+	{
+		RecordingApiCache cache = new();
+		StoryblokContentDeliveryApiClient sut = new("TOKEN", cache);
+
+		await sut.ClearByTag("stories", TestContext.Current.CancellationToken);
+
+		Assert.Equal("stories", cache.ClearedTag);
+	}
+
+	[Fact]
+	public async Task ClearAll_DelegatesToCache()
+	{
+		RecordingApiCache cache = new();
+		StoryblokContentDeliveryApiClient sut = new("TOKEN", cache);
+
+		await sut.ClearAll(TestContext.Current.CancellationToken);
+
+		Assert.Equal(1, cache.ClearAllInvocations);
+	}
+
+	private sealed class RecordingApiCache : IStoryblokContentDeliveryApiCache
 	{
 		public StoryblokRegion? ClearedRegion { get; private set; }
+		public StoryblokContentDeliveryRequest? ClearedRequest { get; private set; }
+		public string? ClearedTag { get; private set; }
+		public int ClearAllInvocations { get; private set; }
 
-		public Task<long> GetOrCreateCv(
+		public Task<StoryblokContentDeliveryResult<TResponse>> GetOrCreate<TResponse>(
 			StoryblokRegion region,
-			Func<CancellationToken, Task<long>> valueFactory,
+			StoryblokContentDeliveryRequest request,
+			Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
+			StoryblokContentDeliveryCacheOptions? options = null,
 			CancellationToken cancellationToken = default)
 		{
+			ArgumentNullException.ThrowIfNull(request);
+			ClearedRegion = region;
 			return valueFactory(cancellationToken);
 		}
 
-		public Task ClearCv(StoryblokRegion region, CancellationToken cancellationToken = default)
+		public Task Clear(StoryblokRegion region, StoryblokContentDeliveryRequest request, CancellationToken cancellationToken = default)
 		{
 			ClearedRegion = region;
+			ClearedRequest = request;
+			return Task.CompletedTask;
+		}
+
+		public Task ClearByTag(string tag, CancellationToken cancellationToken = default)
+		{
+			ClearedTag = tag;
+			return Task.CompletedTask;
+		}
+
+		public Task ClearAll(CancellationToken cancellationToken = default)
+		{
+			ClearAllInvocations++;
 			return Task.CompletedTask;
 		}
 	}

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using StoryblokDotNet.ContentDeliveryApi.Caching;
 using StoryblokDotNet.ContentDeliveryApi.Http;
 using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
@@ -19,7 +20,7 @@ public sealed class StoryblokContentDeliveryApiClient
 	private readonly StoryblokRegion defaultRegion;
 	private readonly Func<HttpClient> httpClientFactory;
 	private readonly StoryblokContentDeliveryHttpClient contentDeliveryHttpClient;
-	private readonly IStoryblokContentDeliveryCvCache cvCache;
+	private readonly IStoryblokContentDeliveryApiCache cache;
 
 	internal static IReadOnlyList<StoryblokRegion> Regions { get; } =
 	[
@@ -36,23 +37,23 @@ public sealed class StoryblokContentDeliveryApiClient
 	public StoryblokContentDeliveryApiClient(
 		IList<StoryblokContentDeliveryHttpClientOptions> clients,
 		IHttpClientFactory httpClientFactory,
-		IStoryblokContentDeliveryCvCache cvCache)
-		: this(clients, CreateHttpClientFactory(httpClientFactory), cvCache)
+		IStoryblokContentDeliveryApiCache cache)
+		: this(clients, CreateHttpClientFactory(httpClientFactory), cache)
 	{
 	}
 
 	public StoryblokContentDeliveryApiClient(
 		IList<StoryblokContentDeliveryHttpClientOptions> clients,
 		Func<HttpClient> httpClientFactory,
-		IStoryblokContentDeliveryCvCache cvCache)
+		IStoryblokContentDeliveryApiCache cache)
 	{
 		ArgumentNullException.ThrowIfNull(clients);
 		ArgumentNullException.ThrowIfNull(httpClientFactory);
-		ArgumentNullException.ThrowIfNull(cvCache);
+		ArgumentNullException.ThrowIfNull(cache);
 		ArgumentOutOfRangeException.ThrowIfZero(clients.Count, nameof(clients));
 
 		this.httpClientFactory = httpClientFactory;
-		this.cvCache = cvCache;
+		this.cache = cache;
 
 		Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> resolvedDefaultsByRegion = [];
 
@@ -74,47 +75,47 @@ public sealed class StoryblokContentDeliveryApiClient
 
 	public StoryblokContentDeliveryApiClient(
 		string token,
-		IStoryblokContentDeliveryCvCache? cvCache = null)
-		: this([new StoryblokContentDeliveryHttpClientOptions { Token = token ?? throw new ArgumentNullException(nameof(token)) }], static () => new HttpClient(), cvCache ?? StoryblokContentDeliveryNoOpCvCache.Instance)
+		IStoryblokContentDeliveryApiCache? cache = null)
+		: this([new StoryblokContentDeliveryHttpClientOptions { Token = token ?? throw new ArgumentNullException(nameof(token)) }], static () => new HttpClient(), cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
 	{
 	}
 
 	public StoryblokContentDeliveryApiClient(
 		string token,
 		IHttpClientFactory httpClientFactory,
-		IStoryblokContentDeliveryCvCache? cvCache = null)
-		: this([new StoryblokContentDeliveryHttpClientOptions { Token = token ?? throw new ArgumentNullException(nameof(token)) }], httpClientFactory, cvCache ?? StoryblokContentDeliveryNoOpCvCache.Instance)
+		IStoryblokContentDeliveryApiCache? cache = null)
+		: this([new StoryblokContentDeliveryHttpClientOptions { Token = token ?? throw new ArgumentNullException(nameof(token)) }], httpClientFactory, cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
 	{
 	}
 
 	public StoryblokContentDeliveryApiClient(
 		string token,
 		Func<HttpClient> httpClientFactory,
-		IStoryblokContentDeliveryCvCache? cvCache = null)
-		: this([new StoryblokContentDeliveryHttpClientOptions { Token = token ?? throw new ArgumentNullException(nameof(token)) }], httpClientFactory, cvCache ?? StoryblokContentDeliveryNoOpCvCache.Instance)
+		IStoryblokContentDeliveryApiCache? cache = null)
+		: this([new StoryblokContentDeliveryHttpClientOptions { Token = token ?? throw new ArgumentNullException(nameof(token)) }], httpClientFactory, cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
 	{
 	}
 
 	public StoryblokContentDeliveryApiClient(
 		StoryblokContentDeliveryHttpClientOptions client,
-		IStoryblokContentDeliveryCvCache? cvCache = null)
-		: this([client ?? throw new ArgumentNullException(nameof(client))], static () => new HttpClient(), cvCache ?? StoryblokContentDeliveryNoOpCvCache.Instance)
+		IStoryblokContentDeliveryApiCache? cache = null)
+		: this([client ?? throw new ArgumentNullException(nameof(client))], static () => new HttpClient(), cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
 	{
 	}
 
 	public StoryblokContentDeliveryApiClient(
 		StoryblokContentDeliveryHttpClientOptions client,
 		IHttpClientFactory httpClientFactory,
-		IStoryblokContentDeliveryCvCache? cvCache = null)
-		: this([client ?? throw new ArgumentNullException(nameof(client))], httpClientFactory, cvCache ?? StoryblokContentDeliveryNoOpCvCache.Instance)
+		IStoryblokContentDeliveryApiCache? cache = null)
+		: this([client ?? throw new ArgumentNullException(nameof(client))], httpClientFactory, cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
 	{
 	}
 
 	public StoryblokContentDeliveryApiClient(
 		StoryblokContentDeliveryHttpClientOptions client,
 		Func<HttpClient> httpClientFactory,
-		IStoryblokContentDeliveryCvCache? cvCache = null)
-		: this([client ?? throw new ArgumentNullException(nameof(client))], httpClientFactory, cvCache ?? StoryblokContentDeliveryNoOpCvCache.Instance)
+		IStoryblokContentDeliveryApiCache? cache = null)
+		: this([client ?? throw new ArgumentNullException(nameof(client))], httpClientFactory, cache ?? StoryblokContentDeliveryNoOpApiCache.Instance)
 	{
 	}
 
@@ -123,7 +124,7 @@ public sealed class StoryblokContentDeliveryApiClient
 		Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> defaultsByRegion,
 		StoryblokRegion defaultRegion,
 		ConcurrentDictionary<StoryblokRegion, Lazy<StoryblokContentDeliveryHttpClient>> clientsByRegion,
-		IStoryblokContentDeliveryCvCache cvCache,
+		IStoryblokContentDeliveryApiCache cache,
 		StoryblokRegion region)
 	{
 		ArgumentNullException.ThrowIfNull(httpClientFactory);
@@ -134,7 +135,7 @@ public sealed class StoryblokContentDeliveryApiClient
 		this.defaultsByRegion = defaultsByRegion;
 		this.defaultRegion = defaultRegion;
 		this.clientsByRegion = clientsByRegion;
-		this.cvCache = cvCache;
+		this.cache = cache;
 
 		contentDeliveryHttpClient = Create(region);
 	}
@@ -183,7 +184,7 @@ public sealed class StoryblokContentDeliveryApiClient
 		HttpClient httpClient = httpClientFactory();
 		httpClient.BaseAddress = GetBaseAddress(resolvedOptions.Region);
 
-		return new StoryblokContentDeliveryHttpClient(httpClient, resolvedOptions, cvCache);
+		return new StoryblokContentDeliveryHttpClient(httpClient, resolvedOptions, cache);
 	}
 
 	public StoryblokContentDeliveryApiClient ForRegion(StoryblokRegion region)
@@ -198,13 +199,25 @@ public sealed class StoryblokContentDeliveryApiClient
 			defaultsByRegion,
 			defaultRegion,
 			clientsByRegion,
-			cvCache,
+			cache,
 			region);
 	}
 
-	public Task ClearCv(CancellationToken cancellationToken = default)
+	public Task Clear(StoryblokContentDeliveryRequest request, CancellationToken cancellationToken = default)
 	{
-		return cvCache.ClearCv(Region, cancellationToken);
+		ArgumentNullException.ThrowIfNull(request);
+
+		return contentDeliveryHttpClient.Clear(request, cancellationToken);
+	}
+
+	public Task ClearByTag(string tag, CancellationToken cancellationToken = default)
+	{
+		return contentDeliveryHttpClient.ClearByTag(tag, cancellationToken);
+	}
+
+	public Task ClearAll(CancellationToken cancellationToken = default)
+	{
+		return contentDeliveryHttpClient.ClearAll(cancellationToken);
 	}
 
 	public StoryblokContentDeliverySpacesApi Spaces()

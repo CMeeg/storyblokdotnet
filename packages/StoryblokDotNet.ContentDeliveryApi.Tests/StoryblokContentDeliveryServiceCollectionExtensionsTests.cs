@@ -2,6 +2,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using StoryblokDotNet.ContentDeliveryApi.Caching;
 using StoryblokDotNet.ContentDeliveryApi.Http;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Tests;
@@ -217,7 +218,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		services.AddStoryblokContentDeliveryApi(options =>
 		{
 			executionCount++;
-			options.UseCvCache = false;
+			options.UseCache = false;
 			options.Clients.Clear();
 			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
 			{
@@ -230,7 +231,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		IOptions<StoryblokContentDeliveryApiOptions> options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>();
 
 		Assert.Equal(1, executionCount);
-		Assert.False(options.Value.UseCvCache);
+		Assert.False(options.Value.UseCache);
 		Assert.Single(options.Value.Clients);
 		Assert.Equal(StoryblokRegion.Australia, options.Value.Clients[0].Region);
 		Assert.Equal("configured-token", options.Value.Clients[0].Token);
@@ -249,10 +250,10 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	}
 
 	[Fact]
-	public void AddStoryblokContentDeliveryApi_WithUseCvCacheDisabled_DoesNotRegisterHybridCache()
+	public void AddStoryblokContentDeliveryApi_WithUseCacheDisabled_DoesNotRegisterHybridCache()
 	{
 		ServiceCollection services = new();
-		services.AddStoryblokContentDeliveryApi(options => options.UseCvCache = false);
+		services.AddStoryblokContentDeliveryApi(options => options.UseCache = false);
 
 		bool hasHybridCacheRegistration = services.Any(serviceDescriptor => serviceDescriptor.ServiceType == typeof(HybridCache));
 
@@ -260,15 +261,15 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	}
 
 	[Fact]
-	public void AddStoryblokContentDeliveryApi_WithUseCvCacheDisabled_RegistersNoOpCvCache()
+	public void AddStoryblokContentDeliveryApi_WithUseCacheDisabled_RegistersNoOpApiCache()
 	{
 		ServiceCollection services = new();
-		services.AddStoryblokContentDeliveryApi(options => options.UseCvCache = false);
+		services.AddStoryblokContentDeliveryApi(options => options.UseCache = false);
 
 		using ServiceProvider serviceProvider = services.BuildServiceProvider();
-		IStoryblokContentDeliveryCvCache cvCache = serviceProvider.GetRequiredService<IStoryblokContentDeliveryCvCache>();
+		IStoryblokContentDeliveryApiCache cache = serviceProvider.GetRequiredService<IStoryblokContentDeliveryApiCache>();
 
-		Assert.IsType<StoryblokContentDeliveryNoOpCvCache>(cvCache);
+		Assert.IsType<StoryblokContentDeliveryNoOpApiCache>(cache);
 	}
 
 	[Fact]
@@ -301,11 +302,11 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 			&& serviceDescriptor.ServiceKey is StoryblokRegion);
 		int apiOptionsValidatorRegistrations = services.Count(serviceDescriptor =>
 			serviceDescriptor.ServiceType == typeof(IValidateOptions<StoryblokContentDeliveryApiOptions>));
-		int cvCacheRegistrations = services.Count(serviceDescriptor => serviceDescriptor.ServiceType == typeof(IStoryblokContentDeliveryCvCache));
+		int cacheRegistrations = services.Count(serviceDescriptor => serviceDescriptor.ServiceType == typeof(IStoryblokContentDeliveryApiCache));
 
 		Assert.Equal(1, unkeyedApiClientRegistrations);
 		Assert.Equal(StoryblokContentDeliveryApiClient.Regions.Count, keyedApiClientRegistrations);
 		Assert.Equal(1, apiOptionsValidatorRegistrations);
-		Assert.Equal(1, cvCacheRegistrations);
+		Assert.Equal(1, cacheRegistrations);
 	}
 }
