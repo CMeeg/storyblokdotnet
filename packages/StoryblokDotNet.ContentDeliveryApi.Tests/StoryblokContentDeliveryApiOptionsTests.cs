@@ -1,3 +1,4 @@
+using StoryblokDotNet.ContentDeliveryApi.Caching;
 using StoryblokDotNet.ContentDeliveryApi.Http;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Tests;
@@ -9,7 +10,8 @@ public sealed class StoryblokContentDeliveryApiOptionsTests
 	{
 		StoryblokContentDeliveryApiOptions sut = new();
 
-		Assert.True(sut.UseCache);
+		Assert.True(sut.Cache.UseCache);
+		Assert.Equal(StoryblokContentDeliveryCacheOptions.DefaultCvTtl, sut.Cache.CvTtl);
 	}
 
 	[Fact]
@@ -17,7 +19,8 @@ public sealed class StoryblokContentDeliveryApiOptionsTests
 	{
 		StoryblokContentDeliveryApiOptions sut = new(new StoryblokContentDeliveryHttpClientOptions());
 
-		Assert.True(sut.UseCache);
+		Assert.True(sut.Cache.UseCache);
+		Assert.Equal(StoryblokContentDeliveryCacheOptions.DefaultCvTtl, sut.Cache.CvTtl);
 	}
 
 	[Fact]
@@ -28,6 +31,7 @@ public sealed class StoryblokContentDeliveryApiOptionsTests
 			new StoryblokContentDeliveryHttpClientOptions(),
 		});
 
-		Assert.True(sut.UseCache);
+		Assert.True(sut.Cache.UseCache);
+		Assert.Equal(StoryblokContentDeliveryCacheOptions.DefaultCvTtl, sut.Cache.CvTtl);
 	}
 }

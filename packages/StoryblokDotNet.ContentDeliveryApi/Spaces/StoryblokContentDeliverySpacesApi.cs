@@ -16,7 +16,7 @@ public sealed class StoryblokContentDeliverySpacesApi
 
 	public Task<StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse>> RetrieveCurrentSpace(
 		RetrieveCurrentSpaceQuery? query = null,
-		StoryblokContentDeliveryCacheOptions? cacheOptions = null,
+		StoryblokContentDeliveryCacheEntryOptions? cacheOptions = null,
 		CancellationToken cancellationToken = default)
 	{
 		RetrieveCurrentSpaceQuery resolvedQuery = query ?? new RetrieveCurrentSpaceQuery();
@@ -27,7 +27,7 @@ public sealed class StoryblokContentDeliverySpacesApi
 
 	public Task<StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse>> RetrieveCurrentSpace(
 		Action<RetrieveCurrentSpaceQueryBuilder> query,
-		StoryblokContentDeliveryCacheOptions? cacheOptions = null,
+		StoryblokContentDeliveryCacheEntryOptions? cacheOptions = null,
 		CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(query);

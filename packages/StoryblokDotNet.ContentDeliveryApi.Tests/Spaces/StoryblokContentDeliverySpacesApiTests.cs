@@ -99,7 +99,7 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 			Token = "configured-token",
 		}, cache);
 		StoryblokContentDeliverySpacesApi sut = new(contentDeliveryHttpClient);
-		StoryblokContentDeliveryCacheOptions cacheOptions = new();
+		StoryblokContentDeliveryCacheEntryOptions cacheOptions = new();
 		cacheOptions.Tags.Add("space");
 
 		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await sut.RetrieveCurrentSpace(cacheOptions: cacheOptions, cancellationToken: TestContext.Current.CancellationToken);
@@ -128,13 +128,13 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 
 	private sealed class RecordingApiCache : IStoryblokContentDeliveryApiCache
 	{
-		public StoryblokContentDeliveryCacheOptions? ReceivedOptions { get; private set; }
+		public StoryblokContentDeliveryCacheEntryOptions? ReceivedOptions { get; private set; }
 
 		public Task<StoryblokContentDeliveryResult<TResponse>> GetOrCreate<TResponse>(
 			StoryblokRegion region,
 			StoryblokContentDeliveryRequest request,
 			Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
-			StoryblokContentDeliveryCacheOptions? options = null,
+			StoryblokContentDeliveryCacheEntryOptions? options = null,
 			CancellationToken cancellationToken = default)
 		{
 			ReceivedOptions = options;

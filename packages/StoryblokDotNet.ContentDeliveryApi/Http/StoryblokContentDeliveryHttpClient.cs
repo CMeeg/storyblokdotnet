@@ -33,19 +33,19 @@ public sealed class StoryblokContentDeliveryHttpClient
 
 	public async Task<StoryblokContentDeliveryResult<TResponse>> Get<TResponse>(
 		StoryblokContentDeliveryRequest request,
-		StoryblokContentDeliveryCacheOptions? options = null,
+		StoryblokContentDeliveryCacheEntryOptions? cacheEntryOptions = null,
 		CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
-		StoryblokContentDeliveryRequest resolvedRequest = await ResolveRequest(request, options, cancellationToken).ConfigureAwait(false);
+		StoryblokContentDeliveryRequest resolvedRequest = await ResolveRequest(request, cacheEntryOptions, cancellationToken).ConfigureAwait(false);
 
 		return await cache
 			.GetOrCreate(
 				Options.Region,
 				resolvedRequest,
 				cancel => SendGet<TResponse>(resolvedRequest, cancel),
-				options,
+				cacheEntryOptions,
 				cancellationToken)
 			.ConfigureAwait(false);
 	}
@@ -56,7 +56,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 	{
 		ArgumentNullException.ThrowIfNull(request);
 
-		StoryblokContentDeliveryRequest resolvedRequest = await ResolveRequest(request, options: null, cancellationToken).ConfigureAwait(false);
+		StoryblokContentDeliveryRequest resolvedRequest = await ResolveRequest(request, cacheEntryOptions: null, cancellationToken).ConfigureAwait(false);
 		await cache.Clear(Options.Region, resolvedRequest, cancellationToken).ConfigureAwait(false);
 	}
 
@@ -161,7 +161,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 
 	private async Task<StoryblokContentDeliveryRequest> ResolveRequest(
 		StoryblokContentDeliveryRequest request,
-		StoryblokContentDeliveryCacheOptions? options,
+		StoryblokContentDeliveryCacheEntryOptions? cacheEntryOptions,
 		CancellationToken cancellationToken)
 	{
 		string? resolvedToken = ResolveToken(request);
@@ -171,7 +171,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 		{
 			try
 			{
-				resolvedCv = await GetCurrentSpaceVersion(options, cancellationToken).ConfigureAwait(false);
+				resolvedCv = await GetCurrentSpaceVersion(cancellationToken).ConfigureAwait(false);
 			}
 			catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
 			{
@@ -199,13 +199,21 @@ public sealed class StoryblokContentDeliveryHttpClient
 	}
 
 	private async Task<long> GetCurrentSpaceVersion(
-		StoryblokContentDeliveryCacheOptions? options,
 		CancellationToken cancellationToken)
 	{
-		StoryblokContentDeliverySpacesApi spacesApi = new(this);
-		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await spacesApi
-			.RetrieveCurrentSpace(new RetrieveCurrentSpaceQuery(), options, cancellationToken)
-			.ConfigureAwait(false);
+		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response;
+		if (Options.Cache.CvTtl <= 0)
+		{
+			response = await SendGet<RetrieveCurrentSpaceResponse>(new RetrieveCurrentSpaceRequest(new RetrieveCurrentSpaceQuery()), cancellationToken).ConfigureAwait(false);
+		}
+		else
+		{
+			StoryblokContentDeliveryCacheEntryOptions cvCacheEntryOptions = BuildCvCacheEntryOptions();
+			StoryblokContentDeliverySpacesApi spacesApi = new(this);
+			response = await spacesApi
+				.RetrieveCurrentSpace(new RetrieveCurrentSpaceQuery(), cvCacheEntryOptions, cancellationToken)
+				.ConfigureAwait(false);
+		}
 
 		if (!response.IsSuccess)
 		{
@@ -213,6 +221,14 @@ public sealed class StoryblokContentDeliveryHttpClient
 		}
 
 		return response.Data.Space.Version;
+	}
+
+	private StoryblokContentDeliveryCacheEntryOptions BuildCvCacheEntryOptions()
+	{
+		return new StoryblokContentDeliveryCacheEntryOptions
+		{
+			Expiration = TimeSpan.FromSeconds(Options.Cache.CvTtl),
+		};
 	}
 
 	private static bool IsRetrieveCurrentSpacePath(string path)

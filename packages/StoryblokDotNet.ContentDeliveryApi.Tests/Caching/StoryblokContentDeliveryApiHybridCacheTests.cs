@@ -13,7 +13,7 @@ public sealed class StoryblokContentDeliveryApiHybridCacheTests
 		HybridCache hybridCache = CreateHybridCache(out IOptions<HybridCacheOptions> hybridCacheOptions);
 		StoryblokContentDeliveryApiHybridCache sut = new(hybridCache, hybridCacheOptions);
 		StoryblokContentDeliveryRequest request = CreateRequest();
-		StoryblokContentDeliveryCacheOptions cacheOptions = new();
+		StoryblokContentDeliveryCacheEntryOptions cacheOptions = new();
 		cacheOptions.Tags.Add("stories");
 		int invocationCount = 0;
 
@@ -43,7 +43,7 @@ public sealed class StoryblokContentDeliveryApiHybridCacheTests
 		HybridCache hybridCache = CreateHybridCache(out IOptions<HybridCacheOptions> hybridCacheOptions);
 		StoryblokContentDeliveryApiHybridCache sut = new(hybridCache, hybridCacheOptions);
 		StoryblokContentDeliveryRequest request = CreateRequest();
-		StoryblokContentDeliveryCacheOptions cacheOptions = new();
+		StoryblokContentDeliveryCacheEntryOptions cacheOptions = new();
 		cacheOptions.Tags.Add("stories");
 		int invocationCount = 0;
 

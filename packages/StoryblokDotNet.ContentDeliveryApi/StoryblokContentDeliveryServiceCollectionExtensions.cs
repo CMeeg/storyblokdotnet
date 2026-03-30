@@ -14,7 +14,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 	{
 		ArgumentNullException.ThrowIfNull(services);
 
-		return AddStoryblokContentDeliveryApiCore(services, useCache: true);
+		return AddStoryblokContentDeliveryApiCore(services, new StoryblokContentDeliveryCacheOptions());
 	}
 
 	public static IServiceCollection AddStoryblokContentDeliveryApi(
@@ -25,7 +25,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 
 		StoryblokContentDeliveryHttpClientOptions resolvedOptions = options ?? new StoryblokContentDeliveryHttpClientOptions();
 
-		AddStoryblokContentDeliveryApiCore(services, useCache: true);
+		AddStoryblokContentDeliveryApiCore(services, new StoryblokContentDeliveryCacheOptions());
 
 		services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions =>
 		{
@@ -47,8 +47,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		ArgumentNullException.ThrowIfNull(services);
 		ArgumentNullException.ThrowIfNull(configureOptions);
 
-		AddStoryblokContentDeliveryApiCore(services, useCache: true);
-
+		AddStoryblokContentDeliveryApiCore(services, new StoryblokContentDeliveryCacheOptions());
 		services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions =>
 		{
 			configuredOptions.Clients.Clear();
@@ -70,7 +69,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		StoryblokContentDeliveryApiOptions resolvedOptions = new();
 		configureOptions(resolvedOptions);
 
-		AddStoryblokContentDeliveryApiCore(services, resolvedOptions.UseCache);
+		AddStoryblokContentDeliveryApiCore(services, resolvedOptions.Cache);
 
 		services.Configure<StoryblokContentDeliveryApiOptions>(configuredOptions => CopyOptions(resolvedOptions, configuredOptions));
 
@@ -84,9 +83,14 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		ArgumentNullException.ThrowIfNull(services);
 		ArgumentNullException.ThrowIfNull(configuration);
 
-		bool useCache = configuration.GetValue<bool?>(nameof(StoryblokContentDeliveryApiOptions.UseCache)) ?? true;
+		StoryblokContentDeliveryCacheOptions cacheOptions = new();
+		IConfigurationSection cacheSection = configuration.GetSection(nameof(StoryblokContentDeliveryApiOptions.Cache));
+		if (cacheSection.Exists())
+		{
+			cacheSection.Bind(cacheOptions);
+		}
 
-		AddStoryblokContentDeliveryApiCore(services, useCache);
+		AddStoryblokContentDeliveryApiCore(services, cacheOptions);
 
 		if (configuration.GetSection("Clients").Exists())
 		{
@@ -131,6 +135,11 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 			{
 				Region = client.Region,
 				Token = client.Token,
+				Cache = new StoryblokContentDeliveryCacheOptions
+				{
+					UseCache = client.Cache.UseCache,
+					CvTtl = client.Cache.CvTtl,
+				},
 			});
 		}
 
@@ -140,13 +149,16 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		destination.Resilience.BackoffMultiplier = source.Resilience.BackoffMultiplier;
 		destination.Resilience.UseJitter = source.Resilience.UseJitter;
 		destination.Resilience.RespectRetryAfterHeader = source.Resilience.RespectRetryAfterHeader;
-		destination.UseCache = source.UseCache;
+		destination.Cache.UseCache = source.Cache.UseCache;
+		destination.Cache.CvTtl = source.Cache.CvTtl;
 	}
 
 	private static IServiceCollection AddStoryblokContentDeliveryApiCore(
 		IServiceCollection services,
-		bool useCache)
+		StoryblokContentDeliveryCacheOptions cacheOptions)
 	{
+		ArgumentNullException.ThrowIfNull(cacheOptions);
+
 		if (services.Any(static serviceDescriptor => serviceDescriptor.ServiceType == typeof(StoryblokContentDeliveryApiRegistrationMarker)))
 		{
 			return services;
@@ -158,12 +170,12 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 
 		services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<StoryblokContentDeliveryApiOptions>, StoryblokContentDeliveryApiOptionsValidator>());
 
-		if (useCache && services.All(static serviceDescriptor => serviceDescriptor.ServiceType != typeof(HybridCache)))
+		if (cacheOptions.UseCache && services.All(static serviceDescriptor => serviceDescriptor.ServiceType != typeof(HybridCache)))
 		{
 			services.AddHybridCache();
 		}
 
-		if (useCache)
+		if (cacheOptions.UseCache)
 		{
 			services.TryAddSingleton<IStoryblokContentDeliveryApiCache>(serviceProvider =>
 			{
@@ -185,7 +197,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 			IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
 			StoryblokContentDeliveryApiOptions options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>().Value;
 			IStoryblokContentDeliveryApiCache cache = serviceProvider.GetRequiredService<IStoryblokContentDeliveryApiCache>();
-			return new StoryblokContentDeliveryApiClient(options.Clients, httpClientFactory, cache);
+			return new StoryblokContentDeliveryApiClient(options, httpClientFactory, cache);
 		});
 
 		foreach (StoryblokRegion region in StoryblokContentDeliveryApiClient.Regions)

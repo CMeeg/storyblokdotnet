@@ -23,7 +23,7 @@ internal sealed class StoryblokContentDeliveryApiHybridCache : IStoryblokContent
 		StoryblokRegion region,
 		StoryblokContentDeliveryRequest request,
 		Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
-		StoryblokContentDeliveryCacheOptions? options = null,
+		StoryblokContentDeliveryCacheEntryOptions? options = null,
 		CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);
@@ -31,6 +31,7 @@ internal sealed class StoryblokContentDeliveryApiHybridCache : IStoryblokContent
 
 		string cacheKey = StoryblokContentDeliveryApiCacheKeyBuilder.Create(region, request, maximumKeyLength);
 		List<string>? tags = GetTags(options);
+		HybridCacheEntryOptions? entryOptions = CreateEntryOptions(options);
 
 		try
 		{
@@ -47,7 +48,7 @@ internal sealed class StoryblokContentDeliveryApiHybridCache : IStoryblokContent
 
 					return result.Data;
 				},
-				options?.EntryOptions,
+				entryOptions,
 				tags,
 				cancellationToken: cancellationToken).ConfigureAwait(false);
 
@@ -85,7 +86,7 @@ internal sealed class StoryblokContentDeliveryApiHybridCache : IStoryblokContent
 		await cache.RemoveByTagAsync("*", cancellationToken).ConfigureAwait(false);
 	}
 
-	private static List<string>? GetTags(StoryblokContentDeliveryCacheOptions? options)
+	private static List<string>? GetTags(StoryblokContentDeliveryCacheEntryOptions? options)
 	{
 		if (options is null || options.Tags.Count == 0)
 		{
@@ -109,6 +110,26 @@ internal sealed class StoryblokContentDeliveryApiHybridCache : IStoryblokContent
 		}
 
 		return tags;
+	}
+
+	private static HybridCacheEntryOptions? CreateEntryOptions(StoryblokContentDeliveryCacheEntryOptions? options)
+	{
+		if (options is null)
+		{
+			return null;
+		}
+
+		if (options.Expiration is null && options.LocalCacheExpiration is null && options.Flags is null)
+		{
+			return null;
+		}
+
+		return new HybridCacheEntryOptions
+		{
+			Expiration = options.Expiration,
+			LocalCacheExpiration = options.LocalCacheExpiration,
+			Flags = options.Flags,
+		};
 	}
 
 	[SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "Internal control-flow exception used only to bypass caching for non-success results.")]

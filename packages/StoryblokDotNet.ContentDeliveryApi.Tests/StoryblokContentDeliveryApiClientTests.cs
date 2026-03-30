@@ -10,7 +10,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	public void Constructor_WithoutHttpClientFactory_ThrowsArgumentNullException()
 	{
 		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryApiClient(
-			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }],
+			new StoryblokContentDeliveryApiOptions(new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }),
 			(IHttpClientFactory)null!,
 			StoryblokContentDeliveryNoOpApiCache.Instance));
 	}
@@ -21,7 +21,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		RecordingHttpClientFactory httpClientFactory = new();
 
 		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryApiClient(
-			(IList<StoryblokContentDeliveryHttpClientOptions>)null!,
+			(StoryblokContentDeliveryApiOptions)null!,
 			httpClientFactory,
 			StoryblokContentDeliveryNoOpApiCache.Instance));
 	}
@@ -32,7 +32,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		RecordingHttpClientFactory httpClientFactory = new();
 
 		Assert.Throws<ArgumentNullException>(() => new StoryblokContentDeliveryApiClient(
-			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }],
+			new StoryblokContentDeliveryApiOptions(new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }),
 			httpClientFactory,
 			null!));
 	}
@@ -42,7 +42,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	{
 		RecordingHttpClientFactory httpClientFactory = new();
 		StoryblokContentDeliveryApiClient sut = new(
-			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }],
+			new StoryblokContentDeliveryApiOptions(new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }),
 			httpClientFactory,
 			StoryblokContentDeliveryNoOpApiCache.Instance);
 
@@ -85,12 +85,12 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	}
 
 	[Fact]
-	public void Constructor_WithEmptyClients_ThrowsArgumentOutOfRangeException()
+	public void Constructor_WithEmptyClients_ThrowsArgumentException()
 	{
 		RecordingHttpClientFactory httpClientFactory = new();
 
-		Assert.Throws<ArgumentOutOfRangeException>(() => new StoryblokContentDeliveryApiClient(
-			[],
+		Assert.Throws<ArgumentException>(() => new StoryblokContentDeliveryApiClient(
+			new StoryblokContentDeliveryApiOptions([]),
 			httpClientFactory,
 			StoryblokContentDeliveryNoOpApiCache.Instance));
 	}
@@ -180,7 +180,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 				Token = "eu-token",
 			},
 		];
-		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
+		StoryblokContentDeliveryApiClient sut = new(new StoryblokContentDeliveryApiOptions(clients), httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		Assert.Equal(clients.First().Region, sut.Region);
 		Assert.Equal(clients.First().Token, sut.Token);
@@ -191,7 +191,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	{
 		RecordingHttpClientFactory httpClientFactory = new();
 		StoryblokContentDeliveryApiClient sut = new(
-			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }],
+			new StoryblokContentDeliveryApiOptions(new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }),
 			httpClientFactory,
 			StoryblokContentDeliveryNoOpApiCache.Instance);
 
@@ -206,7 +206,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	{
 		RecordingHttpClientFactory httpClientFactory = new();
 		StoryblokContentDeliveryApiClient sut = new(
-			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }],
+			new StoryblokContentDeliveryApiOptions(new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }),
 			httpClientFactory,
 			StoryblokContentDeliveryNoOpApiCache.Instance);
 
@@ -233,7 +233,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 				Token = "us-token",
 			},
 		];
-		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
+		StoryblokContentDeliveryApiClient sut = new(new StoryblokContentDeliveryApiOptions(clients), httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		StoryblokContentDeliveryApiClient usClient = sut.ForRegion(StoryblokRegion.Us);
 
@@ -246,7 +246,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 	{
 		int invocationCount = 0;
 		StoryblokContentDeliveryApiClient sut = new(
-			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }],
+			new StoryblokContentDeliveryApiOptions(new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN" }),
 			() =>
 			{
 				invocationCount++;
@@ -273,7 +273,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 			},
 		];
 		StoryblokContentDeliveryApiClient sut = new(
-			clients,
+			new StoryblokContentDeliveryApiOptions(clients),
 			() =>
 			{
 				invocationCount++;
@@ -296,7 +296,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		[
 			new StoryblokContentDeliveryHttpClientOptions { Token = "eu-token" },
 		];
-		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
+		StoryblokContentDeliveryApiClient sut = new(new StoryblokContentDeliveryApiOptions(clients), httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		StoryblokContentDeliveryApiClient australiaClient = sut.ForRegion(StoryblokRegion.Australia);
 
@@ -312,7 +312,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		[
 			new StoryblokContentDeliveryHttpClientOptions { Token = "eu-token" },
 		];
-		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
+		StoryblokContentDeliveryApiClient sut = new(new StoryblokContentDeliveryApiOptions(clients), httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		StoryblokContentDeliveryApiClient euClient = sut;
 		StoryblokContentDeliveryApiClient australiaClient = sut.ForRegion(StoryblokRegion.Australia);
@@ -331,7 +331,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 			Token = "initial-token",
 		};
 		List<StoryblokContentDeliveryHttpClientOptions> clients = [usClientOptions];
-		StoryblokContentDeliveryApiClient sut = new(clients, httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
+		StoryblokContentDeliveryApiClient sut = new(new StoryblokContentDeliveryApiOptions(clients), httpClientFactory, StoryblokContentDeliveryNoOpApiCache.Instance);
 
 		usClientOptions.Token = "mutated-token";
 
@@ -346,7 +346,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		RecordingHttpClientFactory httpClientFactory = new();
 		RecordingApiCache cache = new();
 		StoryblokContentDeliveryApiClient baseClient = new(
-			[new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN", Region = StoryblokRegion.Us }],
+			new StoryblokContentDeliveryApiOptions(new StoryblokContentDeliveryHttpClientOptions { Token = "TOKEN", Region = StoryblokRegion.Us }),
 			httpClientFactory,
 			cache);
 		StoryblokContentDeliveryApiClient sut = baseClient.ForRegion(StoryblokRegion.Us);
@@ -392,7 +392,7 @@ public sealed class StoryblokContentDeliveryApiClientTests
 			StoryblokRegion region,
 			StoryblokContentDeliveryRequest request,
 			Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
-			StoryblokContentDeliveryCacheOptions? options = null,
+			StoryblokContentDeliveryCacheEntryOptions? options = null,
 			CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(request);

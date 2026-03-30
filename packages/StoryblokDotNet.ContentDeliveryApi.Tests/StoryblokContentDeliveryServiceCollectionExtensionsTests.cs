@@ -218,7 +218,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		services.AddStoryblokContentDeliveryApi(options =>
 		{
 			executionCount++;
-			options.UseCache = false;
+			options.Cache.UseCache = false;
 			options.Clients.Clear();
 			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
 			{
@@ -231,7 +231,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		IOptions<StoryblokContentDeliveryApiOptions> options = serviceProvider.GetRequiredService<IOptions<StoryblokContentDeliveryApiOptions>>();
 
 		Assert.Equal(1, executionCount);
-		Assert.False(options.Value.UseCache);
+		Assert.False(options.Value.Cache.UseCache);
 		Assert.Single(options.Value.Clients);
 		Assert.Equal(StoryblokRegion.Australia, options.Value.Clients[0].Region);
 		Assert.Equal("configured-token", options.Value.Clients[0].Token);
@@ -253,7 +253,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	public void AddStoryblokContentDeliveryApi_WithUseCacheDisabled_DoesNotRegisterHybridCache()
 	{
 		ServiceCollection services = new();
-		services.AddStoryblokContentDeliveryApi(options => options.UseCache = false);
+		services.AddStoryblokContentDeliveryApi((StoryblokContentDeliveryApiOptions options) => options.Cache.UseCache = false);
 
 		bool hasHybridCacheRegistration = services.Any(serviceDescriptor => serviceDescriptor.ServiceType == typeof(HybridCache));
 
@@ -264,7 +264,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 	public void AddStoryblokContentDeliveryApi_WithUseCacheDisabled_RegistersNoOpApiCache()
 	{
 		ServiceCollection services = new();
-		services.AddStoryblokContentDeliveryApi(options => options.UseCache = false);
+		services.AddStoryblokContentDeliveryApi((StoryblokContentDeliveryApiOptions options) => options.Cache.UseCache = false);
 
 		using ServiceProvider serviceProvider = services.BuildServiceProvider();
 		IStoryblokContentDeliveryApiCache cache = serviceProvider.GetRequiredService<IStoryblokContentDeliveryApiCache>();
