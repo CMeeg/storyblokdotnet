@@ -1,0 +1,13 @@
+.nuget/
+.vs/
+bin/
+obj/
+
+*.bak
+*.DS_Store
+*.log
+*.suo
+*.tmp
+*.user
+
+TODO.md
