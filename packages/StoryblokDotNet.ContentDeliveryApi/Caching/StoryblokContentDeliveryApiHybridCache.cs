@@ -23,7 +23,7 @@ internal sealed class StoryblokContentDeliveryApiHybridCache : IStoryblokContent
 		StoryblokRegion region,
 		StoryblokContentDeliveryRequest request,
 		Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
-		StoryblokContentDeliveryCacheEntryOptions? options = null,
+		StoryblokContentDeliveryApiCacheEntryOptions? options = null,
 		CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);
@@ -86,7 +86,7 @@ internal sealed class StoryblokContentDeliveryApiHybridCache : IStoryblokContent
 		await cache.RemoveByTagAsync("*", cancellationToken).ConfigureAwait(false);
 	}
 
-	private static List<string>? GetTags(StoryblokContentDeliveryCacheEntryOptions? options)
+	private static List<string>? GetTags(StoryblokContentDeliveryApiCacheEntryOptions? options)
 	{
 		if (options is null || options.Tags.Count == 0)
 		{
@@ -112,7 +112,7 @@ internal sealed class StoryblokContentDeliveryApiHybridCache : IStoryblokContent
 		return tags;
 	}
 
-	private static HybridCacheEntryOptions? CreateEntryOptions(StoryblokContentDeliveryCacheEntryOptions? options)
+	private static HybridCacheEntryOptions? CreateEntryOptions(StoryblokContentDeliveryApiCacheEntryOptions? options)
 	{
 		if (options is null)
 		{

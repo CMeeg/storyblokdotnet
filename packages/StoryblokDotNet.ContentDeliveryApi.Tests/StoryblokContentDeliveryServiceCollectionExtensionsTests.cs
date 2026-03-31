@@ -28,7 +28,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		services.AddStoryblokContentDeliveryApi(options =>
 		{
 			options.Clients.Clear();
-			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = StoryblokRegion.China,
 			});
@@ -68,7 +68,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		services.AddStoryblokContentDeliveryApi(options =>
 		{
 			options.Clients.Clear();
-			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = (StoryblokRegion)999,
 			});
@@ -86,11 +86,11 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		services.AddStoryblokContentDeliveryApi(options =>
 		{
 			options.Clients.Clear();
-			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = StoryblokRegion.Eu,
 			});
-			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = StoryblokRegion.Us,
 			});
@@ -112,11 +112,11 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		services.AddStoryblokContentDeliveryApi(options =>
 		{
 			options.Clients.Clear();
-			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = StoryblokRegion.Canada,
 			});
-			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = StoryblokRegion.Australia,
 			});
@@ -194,7 +194,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 			executionCount++;
 			options.Cache.UseCache = false;
 			options.Clients.Clear();
-			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = StoryblokRegion.Australia,
 				Token = "configured-token",
@@ -362,7 +362,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		services.AddStoryblokContentDeliveryApi(options =>
 		{
 			options.Clients.Clear();
-			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = StoryblokRegion.Eu,
 			});
@@ -371,7 +371,7 @@ public sealed class StoryblokContentDeliveryServiceCollectionExtensionsTests
 		services.AddStoryblokContentDeliveryApi(options =>
 		{
 			options.Clients.Clear();
-			options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = StoryblokRegion.Us,
 			});

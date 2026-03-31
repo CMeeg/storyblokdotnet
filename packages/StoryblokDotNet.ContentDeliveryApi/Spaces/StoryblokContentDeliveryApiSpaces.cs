@@ -3,11 +3,11 @@ using StoryblokDotNet.ContentDeliveryApi.Caching;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Spaces;
 
-public sealed class StoryblokContentDeliverySpacesApi
+public sealed class StoryblokContentDeliveryApiSpaces
 {
-	private readonly StoryblokContentDeliveryHttpClient contentDeliveryHttpClient;
+	private readonly StoryblokContentDeliveryApiHttpClient contentDeliveryHttpClient;
 
-	internal StoryblokContentDeliverySpacesApi(StoryblokContentDeliveryHttpClient contentDeliveryHttpClient)
+	internal StoryblokContentDeliveryApiSpaces(StoryblokContentDeliveryApiHttpClient contentDeliveryHttpClient)
 	{
 		ArgumentNullException.ThrowIfNull(contentDeliveryHttpClient);
 
@@ -16,7 +16,7 @@ public sealed class StoryblokContentDeliverySpacesApi
 
 	public Task<StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse>> RetrieveCurrentSpace(
 		RetrieveCurrentSpaceQuery? query = null,
-		StoryblokContentDeliveryCacheEntryOptions? cacheEntryOptions = null,
+		StoryblokContentDeliveryApiCacheEntryOptions? cacheEntryOptions = null,
 		CancellationToken cancellationToken = default)
 	{
 		RetrieveCurrentSpaceQuery resolvedQuery = query ?? new RetrieveCurrentSpaceQuery();
@@ -27,7 +27,7 @@ public sealed class StoryblokContentDeliverySpacesApi
 
 	public Task<StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse>> RetrieveCurrentSpace(
 		Action<RetrieveCurrentSpaceQueryBuilder> query,
-		StoryblokContentDeliveryCacheEntryOptions? cacheEntryOptions = null,
+		StoryblokContentDeliveryApiCacheEntryOptions? cacheEntryOptions = null,
 		CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(query);

@@ -7,20 +7,20 @@ using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Http;
 
-public sealed class StoryblokContentDeliveryHttpClient
+public sealed class StoryblokContentDeliveryApiHttpClient
 {
 	internal const string CvCacheTag = "sbcd-internal-cv";
 
 	private readonly HttpClient httpClient;
 	private readonly IStoryblokContentDeliveryApiCache cache;
 
-	public StoryblokContentDeliveryHttpClientOptions Options { get; }
+	public StoryblokContentDeliveryApiHttpClientOptions Options { get; }
 
 	public Uri BaseAddress => httpClient.BaseAddress!;
 
-	public StoryblokContentDeliveryHttpClient(
+	public StoryblokContentDeliveryApiHttpClient(
 		HttpClient httpClient,
-		StoryblokContentDeliveryHttpClientOptions options,
+		StoryblokContentDeliveryApiHttpClientOptions options,
 		IStoryblokContentDeliveryApiCache? cache = null)
 	{
 		ArgumentNullException.ThrowIfNull(httpClient);
@@ -35,7 +35,7 @@ public sealed class StoryblokContentDeliveryHttpClient
 
 	public async Task<StoryblokContentDeliveryResult<TResponse>> Get<TResponse>(
 		StoryblokContentDeliveryRequest request,
-		StoryblokContentDeliveryCacheEntryOptions? cacheEntryOptions = null,
+		StoryblokContentDeliveryApiCacheEntryOptions? cacheEntryOptions = null,
 		CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);
@@ -209,8 +209,8 @@ public sealed class StoryblokContentDeliveryHttpClient
 		}
 		else
 		{
-			StoryblokContentDeliveryCacheEntryOptions cvCacheEntryOptions = BuildCvCacheEntryOptions();
-			StoryblokContentDeliverySpacesApi spacesApi = new(this);
+			StoryblokContentDeliveryApiCacheEntryOptions cvCacheEntryOptions = BuildCvCacheEntryOptions();
+			StoryblokContentDeliveryApiSpaces spacesApi = new(this);
 			response = await spacesApi
 				.RetrieveCurrentSpace(new RetrieveCurrentSpaceQuery(), cvCacheEntryOptions, cancellationToken)
 				.ConfigureAwait(false);
@@ -224,9 +224,9 @@ public sealed class StoryblokContentDeliveryHttpClient
 		return response.Data.Space.Version;
 	}
 
-	private StoryblokContentDeliveryCacheEntryOptions BuildCvCacheEntryOptions()
+	private StoryblokContentDeliveryApiCacheEntryOptions BuildCvCacheEntryOptions()
 	{
-		StoryblokContentDeliveryCacheEntryOptions cacheEntryOptions = new()
+		StoryblokContentDeliveryApiCacheEntryOptions cacheEntryOptions = new()
 		{
 			Expiration = TimeSpan.FromSeconds(Options.Cache.CvTtl),
 		};

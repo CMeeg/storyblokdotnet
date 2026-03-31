@@ -50,7 +50,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		{
 			resolvedOptions.Clients.Clear();
 
-			StoryblokContentDeliveryHttpClientOptions defaultClientOptions = new();
+			StoryblokContentDeliveryApiHttpClientOptions defaultClientOptions = new();
 			configuration.Bind(defaultClientOptions);
 			resolvedOptions.Clients.Add(defaultClientOptions);
 
@@ -78,13 +78,13 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		ArgumentNullException.ThrowIfNull(destination);
 
 		destination.Clients.Clear();
-		foreach (StoryblokContentDeliveryHttpClientOptions client in source.Clients)
+		foreach (StoryblokContentDeliveryApiHttpClientOptions client in source.Clients)
 		{
-			destination.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+			destination.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = client.Region,
 				Token = client.Token,
-				Cache = new StoryblokContentDeliveryCacheOptions
+				Cache = new StoryblokContentDeliveryApiCacheOptions
 				{
 					UseCache = client.Cache.UseCache,
 					CvTtl = client.Cache.CvTtl,
@@ -142,7 +142,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 		if (services.All(static serviceDescriptor => serviceDescriptor.ServiceType != typeof(StoryblokContentDeliveryApiHttpClientRegistrationMarker)))
 		{
 			services.AddHttpClient(StoryblokContentDeliveryApiClient.HttpClientName)
-				.AddStoryblokContentDeliveryResilience();
+				.AddStoryblokContentDeliveryApiResilience();
 
 			services.AddSingleton<StoryblokContentDeliveryApiHttpClientRegistrationMarker>();
 		}
@@ -211,7 +211,7 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 
 			if (options.Clients.Any(static client => !Enum.IsDefined(client.Region)))
 			{
-				failures.Add($"{nameof(StoryblokContentDeliveryHttpClientOptions.Region)} must be a valid {nameof(StoryblokRegion)} value.");
+				failures.Add($"{nameof(StoryblokContentDeliveryApiHttpClientOptions.Region)} must be a valid {nameof(StoryblokRegion)} value.");
 			}
 
 			HashSet<StoryblokRegion> configuredRegions = [];
@@ -222,27 +222,27 @@ public static class StoryblokContentDeliveryServiceCollectionExtensions
 
 			if (options.Resilience.MaxRetryAttempts < 0)
 			{
-				failures.Add($"{nameof(StoryblokContentDeliveryResilienceOptions.MaxRetryAttempts)} must be zero or greater.");
+				failures.Add($"{nameof(StoryblokContentDeliveryApiResilienceOptions.MaxRetryAttempts)} must be zero or greater.");
 			}
 
 			if (options.Resilience.InitialDelay < TimeSpan.Zero)
 			{
-				failures.Add($"{nameof(StoryblokContentDeliveryResilienceOptions.InitialDelay)} must be zero or greater.");
+				failures.Add($"{nameof(StoryblokContentDeliveryApiResilienceOptions.InitialDelay)} must be zero or greater.");
 			}
 
 			if (options.Resilience.MaxDelay <= TimeSpan.Zero)
 			{
-				failures.Add($"{nameof(StoryblokContentDeliveryResilienceOptions.MaxDelay)} must be greater than zero.");
+				failures.Add($"{nameof(StoryblokContentDeliveryApiResilienceOptions.MaxDelay)} must be greater than zero.");
 			}
 
 			if (options.Resilience.MaxDelay < options.Resilience.InitialDelay)
 			{
-				failures.Add($"{nameof(StoryblokContentDeliveryResilienceOptions.MaxDelay)} must be greater than or equal to {nameof(StoryblokContentDeliveryResilienceOptions.InitialDelay)}.");
+				failures.Add($"{nameof(StoryblokContentDeliveryApiResilienceOptions.MaxDelay)} must be greater than or equal to {nameof(StoryblokContentDeliveryApiResilienceOptions.InitialDelay)}.");
 			}
 
 			if (options.Resilience.BackoffMultiplier < 1)
 			{
-				failures.Add($"{nameof(StoryblokContentDeliveryResilienceOptions.BackoffMultiplier)} must be greater than or equal to 1.");
+				failures.Add($"{nameof(StoryblokContentDeliveryApiResilienceOptions.BackoffMultiplier)} must be greater than or equal to 1.");
 			}
 
 			return failures.Count == 0

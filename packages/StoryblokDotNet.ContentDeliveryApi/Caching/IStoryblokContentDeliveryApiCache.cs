@@ -6,7 +6,7 @@ public interface IStoryblokContentDeliveryApiCache
 		StoryblokRegion region,
 		StoryblokContentDeliveryRequest request,
 		Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
-		StoryblokContentDeliveryCacheEntryOptions? options = null,
+		StoryblokContentDeliveryApiCacheEntryOptions? options = null,
 		CancellationToken cancellationToken = default);
 
 	Task Clear(

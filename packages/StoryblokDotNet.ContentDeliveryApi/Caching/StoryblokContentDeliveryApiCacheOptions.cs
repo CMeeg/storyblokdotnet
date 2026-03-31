@@ -1,6 +1,6 @@
 namespace StoryblokDotNet.ContentDeliveryApi.Caching;
 
-public sealed class StoryblokContentDeliveryCacheOptions
+public sealed class StoryblokContentDeliveryApiCacheOptions
 {
 	public const int DefaultCvTtl = 3600;
 

@@ -6,7 +6,7 @@ using StoryblokDotNet.ContentDeliveryApi.Spaces;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Tests.Spaces;
 
-public sealed class StoryblokContentDeliverySpacesApiTests
+public sealed class StoryblokContentDeliveryApiSpacesTests
 {
 	[Fact]
 	public async Task RetrieveCurrentSpace_WithNullQuery_UsesSpacesMeEndpointAndDeserializesResponse()
@@ -30,11 +30,11 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 		{
 			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
-		StoryblokContentDeliveryHttpClient contentDeliveryHttpClient = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
+		StoryblokContentDeliveryApiHttpClient contentDeliveryHttpClient = new(httpClient, new StoryblokContentDeliveryApiHttpClientOptions
 		{
 			Token = "configured-token",
 		});
-		StoryblokContentDeliverySpacesApi sut = new(contentDeliveryHttpClient);
+		StoryblokContentDeliveryApiSpaces sut = new(contentDeliveryHttpClient);
 
 		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await sut.RetrieveCurrentSpace(cancellationToken: TestContext.Current.CancellationToken);
 
@@ -71,11 +71,11 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 		{
 			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
-		StoryblokContentDeliveryHttpClient contentDeliveryHttpClient = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
+		StoryblokContentDeliveryApiHttpClient contentDeliveryHttpClient = new(httpClient, new StoryblokContentDeliveryApiHttpClientOptions
 		{
 			Token = "configured-token",
 		});
-		StoryblokContentDeliverySpacesApi sut = new(contentDeliveryHttpClient);
+		StoryblokContentDeliveryApiSpaces sut = new(contentDeliveryHttpClient);
 
 		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await sut.RetrieveCurrentSpace(builder => builder.WithToken("builder-token"), cancellationToken: TestContext.Current.CancellationToken);
 
@@ -94,12 +94,12 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 			BaseAddress = StoryblokContentDeliveryApiClient.GetBaseAddress(StoryblokRegion.Eu),
 		};
 		RecordingApiCache cache = new();
-		StoryblokContentDeliveryHttpClient contentDeliveryHttpClient = new(httpClient, new StoryblokContentDeliveryHttpClientOptions
+		StoryblokContentDeliveryApiHttpClient contentDeliveryHttpClient = new(httpClient, new StoryblokContentDeliveryApiHttpClientOptions
 		{
 			Token = "configured-token",
 		}, cache);
-		StoryblokContentDeliverySpacesApi sut = new(contentDeliveryHttpClient);
-		StoryblokContentDeliveryCacheEntryOptions cacheOptions = new();
+		StoryblokContentDeliveryApiSpaces sut = new(contentDeliveryHttpClient);
+		StoryblokContentDeliveryApiCacheEntryOptions cacheOptions = new();
 		cacheOptions.Tags.Add("space");
 
 		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await sut.RetrieveCurrentSpace(cacheEntryOptions: cacheOptions, cancellationToken: TestContext.Current.CancellationToken);
@@ -128,13 +128,13 @@ public sealed class StoryblokContentDeliverySpacesApiTests
 
 	private sealed class RecordingApiCache : IStoryblokContentDeliveryApiCache
 	{
-		public StoryblokContentDeliveryCacheEntryOptions? ReceivedOptions { get; private set; }
+		public StoryblokContentDeliveryApiCacheEntryOptions? ReceivedOptions { get; private set; }
 
 		public Task<StoryblokContentDeliveryResult<TResponse>> GetOrCreate<TResponse>(
 			StoryblokRegion region,
 			StoryblokContentDeliveryRequest request,
 			Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
-			StoryblokContentDeliveryCacheEntryOptions? options = null,
+			StoryblokContentDeliveryApiCacheEntryOptions? options = null,
 			CancellationToken cancellationToken = default)
 		{
 			ReceivedOptions = options;

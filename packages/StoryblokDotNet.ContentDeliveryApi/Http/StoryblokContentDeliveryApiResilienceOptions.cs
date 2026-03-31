@@ -2,7 +2,7 @@ using System.Net;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Http;
 
-public sealed class StoryblokContentDeliveryResilienceOptions
+public sealed class StoryblokContentDeliveryApiResilienceOptions
 {
 	public bool Enabled { get; set; } = true;
 

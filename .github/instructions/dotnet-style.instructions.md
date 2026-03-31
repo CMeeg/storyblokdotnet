@@ -25,6 +25,6 @@ applyTo: "{**/*.{cs,csproj,props,targets,sln,slnx},**/global.json,**/nuget.confi
 
 - When adding tests, place xUnit v3 test classes under `packages/StoryblokDotNet.ContentDeliveryApi.Tests` with public test classes and `[Fact]` or `[Theory]` methods so `dotnet test` can discover them.
 - Keep test classes public.
-- Organize tests by system under test: keep each production type's tests in a dedicated file (for example, `StoryblokContentDeliveryHttpClientFactoryTests.cs` and `StoryblokContentDeliveryServiceCollectionExtensionsTests.cs`) instead of combining unrelated test groups in one file.
+- Organize tests by system under test: keep each production type's tests in a dedicated file (for example, `StoryblokContentDeliveryApiHttpClientFactoryTests.cs` and `StoryblokContentDeliveryServiceCollectionExtensionsTests.cs`) instead of combining unrelated test groups in one file.
 - Keep each production type's tests in a dedicated file that matches the name and location of the corresponding of the SUT's source file (as far as is possible).
 - Name test methods using a concise underscore-separated `Subject_With_ExpectedResult` style where `Subject` is usually the method under test, `With` is a brief summation of the arguments or context used, and `ExpectedResult` is a brief summation of the expected result or primary assertion (for example, `Create_WithoutOptions_UsesEuDefaults`).

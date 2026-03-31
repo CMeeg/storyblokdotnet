@@ -5,19 +5,19 @@ using Polly;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Http;
 
-public static class StoryblokContentDeliveryResilience
+public static class StoryblokContentDeliveryApiResilience
 {
-	public static IHttpClientBuilder AddStoryblokContentDeliveryResilience(
+	public static IHttpClientBuilder AddStoryblokContentDeliveryApiResilience(
 		this IHttpClientBuilder httpClientBuilder,
-		StoryblokContentDeliveryResilienceOptions? resilienceOptions = null)
+		StoryblokContentDeliveryApiResilienceOptions? resilienceOptions = null)
 	{
 		ArgumentNullException.ThrowIfNull(httpClientBuilder);
 
-		StoryblokContentDeliveryResilienceOptions resolvedResilienceOptions = resilienceOptions ?? new StoryblokContentDeliveryResilienceOptions();
+		StoryblokContentDeliveryApiResilienceOptions resolvedResilienceOptions = resilienceOptions ?? new StoryblokContentDeliveryApiResilienceOptions();
 
 		httpClientBuilder.AddResilienceHandler("StoryblokRetry", (builder, context) =>
 		{
-			StoryblokContentDeliveryResilienceOptions options = context.ServiceProvider
+			StoryblokContentDeliveryApiResilienceOptions options = context.ServiceProvider
 				.GetService<IOptions<StoryblokContentDeliveryApiOptions>>()?.Value.Resilience
 				?? resolvedResilienceOptions;
 
@@ -32,7 +32,7 @@ public static class StoryblokContentDeliveryResilience
 		return httpClientBuilder;
 	}
 
-	private static HttpRetryStrategyOptions CreateRetryStrategyOptions(StoryblokContentDeliveryResilienceOptions resilienceOptions)
+	private static HttpRetryStrategyOptions CreateRetryStrategyOptions(StoryblokContentDeliveryApiResilienceOptions resilienceOptions)
 	{
 		return new HttpRetryStrategyOptions
 		{
@@ -68,7 +68,7 @@ public static class StoryblokContentDeliveryResilience
 		};
 	}
 
-	internal static TimeSpan ResolveRetryDelay(int retryAttemptNumber, HttpResponseMessage? response, StoryblokContentDeliveryResilienceOptions resilienceOptions)
+	internal static TimeSpan ResolveRetryDelay(int retryAttemptNumber, HttpResponseMessage? response, StoryblokContentDeliveryApiResilienceOptions resilienceOptions)
 	{
 		if (resilienceOptions.RespectRetryAfterHeader
 			&& response is not null
@@ -111,7 +111,7 @@ public static class StoryblokContentDeliveryResilience
 		return false;
 	}
 
-	private static TimeSpan ComputeRetryDelay(int attempt, StoryblokContentDeliveryResilienceOptions resilienceOptions)
+	private static TimeSpan ComputeRetryDelay(int attempt, StoryblokContentDeliveryApiResilienceOptions resilienceOptions)
 	{
 		double exponentialMs = resilienceOptions.InitialDelay.TotalMilliseconds
 			* Math.Pow(resilienceOptions.BackoffMultiplier, attempt - 1);

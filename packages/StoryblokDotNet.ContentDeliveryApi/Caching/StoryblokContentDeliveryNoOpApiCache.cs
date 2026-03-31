@@ -12,7 +12,7 @@ internal sealed class StoryblokContentDeliveryNoOpApiCache : IStoryblokContentDe
 		StoryblokRegion region,
 		StoryblokContentDeliveryRequest request,
 		Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
-		StoryblokContentDeliveryCacheEntryOptions? options = null,
+		StoryblokContentDeliveryApiCacheEntryOptions? options = null,
 		CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(request);

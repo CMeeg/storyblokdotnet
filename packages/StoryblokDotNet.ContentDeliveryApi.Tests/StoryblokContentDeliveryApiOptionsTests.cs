@@ -11,27 +11,27 @@ public sealed class StoryblokContentDeliveryApiOptionsTests
 		StoryblokContentDeliveryApiOptions sut = new();
 
 		Assert.True(sut.Cache.UseCache);
-		Assert.Equal(StoryblokContentDeliveryCacheOptions.DefaultCvTtl, sut.Cache.CvTtl);
+		Assert.Equal(StoryblokContentDeliveryApiCacheOptions.DefaultCvTtl, sut.Cache.CvTtl);
 	}
 
 	[Fact]
 	public void Constructor_WithClient_UsesCacheByDefault()
 	{
-		StoryblokContentDeliveryApiOptions sut = new(new StoryblokContentDeliveryHttpClientOptions());
+		StoryblokContentDeliveryApiOptions sut = new(new StoryblokContentDeliveryApiHttpClientOptions());
 
 		Assert.True(sut.Cache.UseCache);
-		Assert.Equal(StoryblokContentDeliveryCacheOptions.DefaultCvTtl, sut.Cache.CvTtl);
+		Assert.Equal(StoryblokContentDeliveryApiCacheOptions.DefaultCvTtl, sut.Cache.CvTtl);
 	}
 
 	[Fact]
 	public void Constructor_WithClients_UsesCacheByDefault()
 	{
-		StoryblokContentDeliveryApiOptions sut = new(new List<StoryblokContentDeliveryHttpClientOptions>
+		StoryblokContentDeliveryApiOptions sut = new(new List<StoryblokContentDeliveryApiHttpClientOptions>
 		{
-			new StoryblokContentDeliveryHttpClientOptions(),
+			new StoryblokContentDeliveryApiHttpClientOptions(),
 		});
 
 		Assert.True(sut.Cache.UseCache);
-		Assert.Equal(StoryblokContentDeliveryCacheOptions.DefaultCvTtl, sut.Cache.CvTtl);
+		Assert.Equal(StoryblokContentDeliveryApiCacheOptions.DefaultCvTtl, sut.Cache.CvTtl);
 	}
 }

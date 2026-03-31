@@ -27,7 +27,7 @@
 
 * New NuGet dependencies should be added with central package management in `Directory.Packages.props`.
 * Preserve existing folder boundaries: package code in `packages/StoryblokDotNet.ContentDeliveryApi` and tests in `packages/StoryblokDotNet.ContentDeliveryApi.Tests`.
-* Organize tests by system under test: keep each production type's tests in a dedicated file (for example, `StoryblokContentDeliveryHttpClientFactoryTests.cs` and `StoryblokContentDeliveryServiceCollectionExtensionsTests.cs`) instead of combining unrelated test groups in one file.
+* Organize tests by system under test: keep each production type's tests in a dedicated file (for example, `StoryblokContentDeliveryApiHttpClientFactoryTests.cs` and `StoryblokContentDeliveryServiceCollectionExtensionsTests.cs`) instead of combining unrelated test groups in one file.
 * Name test methods using a concise underscore-separated `Subject_With_ExpectedResult` style where `Subject` is usually the method under test, `With` is a brief summation of the arguments or context used, and `ExpectedResult` is a brief summation of the expected result or primary assertion (for example, `Create_WithoutOptions_UsesEuDefaults`).
 * In this repository, do not add the `Async` suffix to method names by default, even for `Task`-returning methods. Only use it when required for compatibility with an external API or to avoid an unavoidable overload conflict.
 * If implementation reveals an unplanned architectural tradeoff, ask the user for confirmation before changing the agreed approach (for example, introducing new factories, abstractions, or fallback paths to work around framework behavior).

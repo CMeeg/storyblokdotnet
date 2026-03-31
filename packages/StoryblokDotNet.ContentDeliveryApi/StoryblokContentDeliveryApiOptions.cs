@@ -5,41 +5,41 @@ namespace StoryblokDotNet.ContentDeliveryApi;
 
 public sealed class StoryblokContentDeliveryApiOptions
 {
-	public IList<StoryblokContentDeliveryHttpClientOptions> Clients { get; }
+	public IList<StoryblokContentDeliveryApiHttpClientOptions> Clients { get; }
 
-	public StoryblokContentDeliveryResilienceOptions Resilience { get; }
+	public StoryblokContentDeliveryApiResilienceOptions Resilience { get; }
 
-	public StoryblokContentDeliveryCacheOptions Cache { get; }
+	public StoryblokContentDeliveryApiCacheOptions Cache { get; }
 
 	public StoryblokContentDeliveryApiOptions()
-		: this(new StoryblokContentDeliveryHttpClientOptions())
+		: this(new StoryblokContentDeliveryApiHttpClientOptions())
 	{
 	}
 
 	public StoryblokContentDeliveryApiOptions(
-		StoryblokContentDeliveryHttpClientOptions client,
-		StoryblokContentDeliveryResilienceOptions? resilience = null,
-		StoryblokContentDeliveryCacheOptions? cache = null)
+		StoryblokContentDeliveryApiHttpClientOptions client,
+		StoryblokContentDeliveryApiResilienceOptions? resilience = null,
+		StoryblokContentDeliveryApiCacheOptions? cache = null)
 	{
 		ArgumentNullException.ThrowIfNull(client);
 
 		Clients =
 		[
-			new StoryblokContentDeliveryHttpClientOptions
+			new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = client.Region,
 				Token = client.Token,
-				Cache = new StoryblokContentDeliveryCacheOptions
+				Cache = new StoryblokContentDeliveryApiCacheOptions
 				{
 					UseCache = client.Cache.UseCache,
 					CvTtl = client.Cache.CvTtl,
 				},
 			},
 		];
-		Resilience = resilience ?? new StoryblokContentDeliveryResilienceOptions();
+		Resilience = resilience ?? new StoryblokContentDeliveryApiResilienceOptions();
 		Cache = cache is null
-			? new StoryblokContentDeliveryCacheOptions()
-			: new StoryblokContentDeliveryCacheOptions
+			? new StoryblokContentDeliveryApiCacheOptions()
+			: new StoryblokContentDeliveryApiCacheOptions
 			{
 				UseCache = cache.UseCache,
 				CvTtl = cache.CvTtl,
@@ -48,10 +48,10 @@ public sealed class StoryblokContentDeliveryApiOptions
 
 	public StoryblokContentDeliveryApiOptions(
 		string token,
-		StoryblokContentDeliveryResilienceOptions? resilience = null,
-		StoryblokContentDeliveryCacheOptions? cache = null)
+		StoryblokContentDeliveryApiResilienceOptions? resilience = null,
+		StoryblokContentDeliveryApiCacheOptions? cache = null)
 		: this(
-			new StoryblokContentDeliveryHttpClientOptions
+			new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Token = token,
 			},
@@ -61,9 +61,9 @@ public sealed class StoryblokContentDeliveryApiOptions
 	}
 
 	public StoryblokContentDeliveryApiOptions(
-		IList<StoryblokContentDeliveryHttpClientOptions> clients,
-		StoryblokContentDeliveryResilienceOptions? resilience = null,
-		StoryblokContentDeliveryCacheOptions? cache = null)
+		IList<StoryblokContentDeliveryApiHttpClientOptions> clients,
+		StoryblokContentDeliveryApiResilienceOptions? resilience = null,
+		StoryblokContentDeliveryApiCacheOptions? cache = null)
 	{
 		ArgumentNullException.ThrowIfNull(clients);
 
@@ -75,11 +75,11 @@ public sealed class StoryblokContentDeliveryApiOptions
 		Clients = clients
 			.Select(client => client is null
 				? throw new ArgumentException("Client configurations cannot contain null values.", nameof(clients))
-				: new StoryblokContentDeliveryHttpClientOptions
+				: new StoryblokContentDeliveryApiHttpClientOptions
 				{
 					Region = client.Region,
 					Token = client.Token,
-					Cache = new StoryblokContentDeliveryCacheOptions
+					Cache = new StoryblokContentDeliveryApiCacheOptions
 					{
 						UseCache = client.Cache.UseCache,
 						CvTtl = client.Cache.CvTtl,
@@ -87,10 +87,10 @@ public sealed class StoryblokContentDeliveryApiOptions
 				})
 			.ToList();
 
-		Resilience = resilience ?? new StoryblokContentDeliveryResilienceOptions();
+		Resilience = resilience ?? new StoryblokContentDeliveryApiResilienceOptions();
 		Cache = cache is null
-			? new StoryblokContentDeliveryCacheOptions()
-			: new StoryblokContentDeliveryCacheOptions
+			? new StoryblokContentDeliveryApiCacheOptions()
+			: new StoryblokContentDeliveryApiCacheOptions
 			{
 				UseCache = cache.UseCache,
 				CvTtl = cache.CvTtl,

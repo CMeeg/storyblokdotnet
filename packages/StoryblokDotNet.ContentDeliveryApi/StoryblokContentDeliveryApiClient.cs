@@ -16,12 +16,12 @@ public sealed class StoryblokContentDeliveryApiClient
 	private static readonly Uri AustraliaBaseAddress = new("https://api-ap.storyblok.com/v2/cdn", UriKind.Absolute);
 	private static readonly Uri ChinaBaseAddress = new("https://app.storyblokchina.cn/v2/cdn", UriKind.Absolute);
 
-	private readonly ConcurrentDictionary<StoryblokRegion, Lazy<StoryblokContentDeliveryHttpClient>> clientsByRegion;
-	private readonly Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> defaultsByRegion;
-	private readonly StoryblokContentDeliveryCacheOptions defaultCacheOptions;
+	private readonly ConcurrentDictionary<StoryblokRegion, Lazy<StoryblokContentDeliveryApiHttpClient>> clientsByRegion;
+	private readonly Dictionary<StoryblokRegion, StoryblokContentDeliveryApiHttpClientOptions> defaultsByRegion;
+	private readonly StoryblokContentDeliveryApiCacheOptions defaultCacheOptions;
 	private readonly StoryblokRegion defaultRegion;
 	private readonly Func<HttpClient> httpClientFactory;
-	private readonly StoryblokContentDeliveryHttpClient contentDeliveryHttpClient;
+	private readonly StoryblokContentDeliveryApiHttpClient contentDeliveryHttpClient;
 	private readonly IStoryblokContentDeliveryApiCache cache;
 
 	internal static IReadOnlyList<StoryblokRegion> Regions { get; } =
@@ -58,11 +58,11 @@ public sealed class StoryblokContentDeliveryApiClient
 		this.cache = cache;
 		this.defaultCacheOptions = options.Cache;
 
-		Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> resolvedDefaultsByRegion = [];
+		Dictionary<StoryblokRegion, StoryblokContentDeliveryApiHttpClientOptions> resolvedDefaultsByRegion = [];
 
-		foreach (StoryblokContentDeliveryHttpClientOptions clientOptions in options.Clients)
+		foreach (StoryblokContentDeliveryApiHttpClientOptions clientOptions in options.Clients)
 		{
-			resolvedDefaultsByRegion[clientOptions.Region] = new StoryblokContentDeliveryHttpClientOptions
+			resolvedDefaultsByRegion[clientOptions.Region] = new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = clientOptions.Region,
 				Token = clientOptions.Token,
@@ -72,7 +72,7 @@ public sealed class StoryblokContentDeliveryApiClient
 
 		this.defaultsByRegion = resolvedDefaultsByRegion;
 		this.defaultRegion = options.Clients.First().Region;
-		this.clientsByRegion = new ConcurrentDictionary<StoryblokRegion, Lazy<StoryblokContentDeliveryHttpClient>>();
+		this.clientsByRegion = new ConcurrentDictionary<StoryblokRegion, Lazy<StoryblokContentDeliveryApiHttpClient>>();
 
 		contentDeliveryHttpClient = Create();
 	}
@@ -88,7 +88,7 @@ public sealed class StoryblokContentDeliveryApiClient
 	}
 
 	public StoryblokContentDeliveryApiClient(
-		StoryblokContentDeliveryHttpClientOptions client,
+		StoryblokContentDeliveryApiHttpClientOptions client,
 		IStoryblokContentDeliveryApiCache? cache = null)
 		: this(
 			new StoryblokContentDeliveryApiOptions(client ?? throw new ArgumentNullException(nameof(client))),
@@ -99,10 +99,10 @@ public sealed class StoryblokContentDeliveryApiClient
 
 	private StoryblokContentDeliveryApiClient(
 		Func<HttpClient> httpClientFactory,
-		Dictionary<StoryblokRegion, StoryblokContentDeliveryHttpClientOptions> defaultsByRegion,
-		StoryblokContentDeliveryCacheOptions defaultCacheOptions,
+		Dictionary<StoryblokRegion, StoryblokContentDeliveryApiHttpClientOptions> defaultsByRegion,
+		StoryblokContentDeliveryApiCacheOptions defaultCacheOptions,
 		StoryblokRegion defaultRegion,
-		ConcurrentDictionary<StoryblokRegion, Lazy<StoryblokContentDeliveryHttpClient>> clientsByRegion,
+		ConcurrentDictionary<StoryblokRegion, Lazy<StoryblokContentDeliveryApiHttpClient>> clientsByRegion,
 		IStoryblokContentDeliveryApiCache cache,
 		StoryblokRegion region)
 	{
@@ -126,13 +126,13 @@ public sealed class StoryblokContentDeliveryApiClient
 		return () => httpClientFactory.CreateClient(HttpClientName);
 	}
 
-	private StoryblokContentDeliveryHttpClient Create(StoryblokRegion? region = null)
+	private StoryblokContentDeliveryApiHttpClient Create(StoryblokRegion? region = null)
 	{
 		StoryblokRegion resolvedRegion = region ?? defaultRegion;
 
-		StoryblokContentDeliveryHttpClientOptions options = defaultsByRegion.TryGetValue(resolvedRegion, out StoryblokContentDeliveryHttpClientOptions? configuredOptions)
+		StoryblokContentDeliveryApiHttpClientOptions options = defaultsByRegion.TryGetValue(resolvedRegion, out StoryblokContentDeliveryApiHttpClientOptions? configuredOptions)
 			? configuredOptions
-			: new StoryblokContentDeliveryHttpClientOptions
+			: new StoryblokContentDeliveryApiHttpClientOptions
 			{
 				Region = resolvedRegion,
 				Cache = defaultCacheOptions,
@@ -141,22 +141,22 @@ public sealed class StoryblokContentDeliveryApiClient
 		return Create(options);
 	}
 
-	private StoryblokContentDeliveryHttpClient Create(StoryblokContentDeliveryHttpClientOptions options)
+	private StoryblokContentDeliveryApiHttpClient Create(StoryblokContentDeliveryApiHttpClientOptions options)
 	{
 		ArgumentNullException.ThrowIfNull(options);
 
-		Lazy<StoryblokContentDeliveryHttpClient> lazyClient = clientsByRegion.GetOrAdd(
+		Lazy<StoryblokContentDeliveryApiHttpClient> lazyClient = clientsByRegion.GetOrAdd(
 			options.Region,
-			_ => new Lazy<StoryblokContentDeliveryHttpClient>(
+			_ => new Lazy<StoryblokContentDeliveryApiHttpClient>(
 				() => CreateClient(options),
 				LazyThreadSafetyMode.ExecutionAndPublication));
 
 		return lazyClient.Value;
 	}
 
-	private StoryblokContentDeliveryHttpClient CreateClient(StoryblokContentDeliveryHttpClientOptions options)
+	private StoryblokContentDeliveryApiHttpClient CreateClient(StoryblokContentDeliveryApiHttpClientOptions options)
 	{
-		StoryblokContentDeliveryHttpClientOptions resolvedOptions = new()
+		StoryblokContentDeliveryApiHttpClientOptions resolvedOptions = new()
 		{
 			Region = options.Region,
 			Token = options.Token,
@@ -174,7 +174,7 @@ public sealed class StoryblokContentDeliveryApiClient
 
 		httpClient.BaseAddress = expectedBaseAddress;
 
-		return new StoryblokContentDeliveryHttpClient(httpClient, resolvedOptions, cache);
+		return new StoryblokContentDeliveryApiHttpClient(httpClient, resolvedOptions, cache);
 	}
 
 	public StoryblokContentDeliveryApiClient ForRegion(StoryblokRegion region)
@@ -203,7 +203,7 @@ public sealed class StoryblokContentDeliveryApiClient
 
 	public Task ClearCvCache(CancellationToken cancellationToken = default)
 	{
-		return contentDeliveryHttpClient.ClearByTag(StoryblokContentDeliveryHttpClient.CvCacheTag, cancellationToken);
+		return contentDeliveryHttpClient.ClearByTag(StoryblokContentDeliveryApiHttpClient.CvCacheTag, cancellationToken);
 	}
 
 	public Task ClearByTag(string tag, CancellationToken cancellationToken = default)
@@ -216,9 +216,9 @@ public sealed class StoryblokContentDeliveryApiClient
 		return contentDeliveryHttpClient.ClearAll(cancellationToken);
 	}
 
-	public StoryblokContentDeliverySpacesApi Spaces()
+	public StoryblokContentDeliveryApiSpaces Spaces()
 	{
-		return new StoryblokContentDeliverySpacesApi(contentDeliveryHttpClient);
+		return new StoryblokContentDeliveryApiSpaces(contentDeliveryHttpClient);
 	}
 
 	internal static Uri GetBaseAddress(StoryblokRegion region) => region switch

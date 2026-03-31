@@ -37,12 +37,12 @@ services.AddStoryblokContentDeliveryApi(options =>
 {
 	options.Clients.Clear();
 
-	options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+	options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 	{
 		Region = StoryblokRegion.Canada,
 	});
 
-	options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+	options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 	{
 		Region = StoryblokRegion.Australia,
 	});
@@ -133,11 +133,11 @@ ServiceCollection services = new();
 services.AddStoryblokContentDeliveryApi(options =>
 {
 	options.Clients.Clear();
-	options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+	options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 	{
 		Region = StoryblokRegion.Canada,
 	});
-	options.Clients.Add(new StoryblokContentDeliveryHttpClientOptions
+	options.Clients.Add(new StoryblokContentDeliveryApiHttpClientOptions
 	{
 		Region = StoryblokRegion.Us,
 	});

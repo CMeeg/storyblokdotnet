@@ -2,7 +2,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 
 namespace StoryblokDotNet.ContentDeliveryApi.Caching;
 
-public sealed class StoryblokContentDeliveryCacheEntryOptions
+public sealed class StoryblokContentDeliveryApiCacheEntryOptions
 {
 	public TimeSpan? Expiration { get; set; }
 
