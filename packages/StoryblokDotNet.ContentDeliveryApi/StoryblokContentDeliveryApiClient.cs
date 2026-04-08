@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using StoryblokDotNet.ContentDeliveryApi.Caching;
 using StoryblokDotNet.ContentDeliveryApi.Http;
 using StoryblokDotNet.ContentDeliveryApi.Spaces;
+using StoryblokDotNet.ContentDeliveryApi.Tags;
 
 namespace StoryblokDotNet.ContentDeliveryApi;
 
@@ -219,6 +220,11 @@ public sealed class StoryblokContentDeliveryApiClient
 	public StoryblokContentDeliveryApiSpaces Spaces()
 	{
 		return new StoryblokContentDeliveryApiSpaces(contentDeliveryHttpClient);
+	}
+
+	public StoryblokContentDeliveryApiTags Tags()
+	{
+		return new StoryblokContentDeliveryApiTags(contentDeliveryHttpClient);
 	}
 
 	internal static Uri GetBaseAddress(StoryblokRegion region) => region switch

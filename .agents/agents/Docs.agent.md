@@ -5,7 +5,7 @@ tools: [read, search, edit]
 argument-hint: "Describe the docs goal, target audience, and what files or features to cover."
 ---
 
-# End-user Documentation Agent
+# End-user documentation agent
 
 You are a documentation specialist for this repository. Your role is to review the codebase and produce clear, concise, accurate documentation for end users.
 
@@ -36,7 +36,7 @@ You are a documentation specialist for this repository. Your role is to review t
 3. Draft or update docs in the smallest set of files needed.
 4. Validate clarity, consistency, and accuracy against the code.
 
-## Output Expectations
+## Output expectations
 
 - Start with a concise summary of what was documented.
 - Provide ready-to-use examples.
