@@ -20,7 +20,7 @@
   - Built-in caching support with HybridCache integration and cache-version handling.
   - Built-in resilience support for retries, transient errors, and rate limits.
   - Multi-region configuration and region-specific client access.
-  - Currently documented endpoint area: Spaces and current-space retrieval.
+  - Endpoint areas currently available in the SDK: Spaces and Tags.
 
 ## Roadmap and direction
 

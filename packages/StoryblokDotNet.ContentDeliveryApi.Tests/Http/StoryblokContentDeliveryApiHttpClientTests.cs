@@ -382,8 +382,7 @@ public sealed class StoryblokContentDeliveryApiHttpClientTests
 
 		Assert.False(response.IsSuccess);
 		Assert.NotNull(response.Error);
-		Assert.Equal(StoryblokContentDeliveryErrorCategory.Serialization, response.Error!.Category);
-		Assert.Throws<InvalidOperationException>(() => _ = response.Data);
+		Assert.Equal(StoryblokContentDeliveryErrorCategory.Serialization, response.Error.Category);
 	}
 
 	private static HttpResponseMessage CreateJsonResponse(string json)

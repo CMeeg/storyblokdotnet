@@ -79,6 +79,11 @@ storyblokdotnet/
 - `StoryblokContentDeliveryApiSpaces` encapsulates endpoint-specific logic
 - Supports both direct query instances and query builder delegates
 
+#### Tags API Area
+
+- `StoryblokContentDeliveryApiTags` encapsulates tag endpoint logic
+- Supports both direct query instances and query builder delegates
+
 #### Test Package
 
 - Verifies client behavior, registration behavior, options validation paths, and endpoint behavior
@@ -112,7 +117,7 @@ Typical flow for retrieving current space:
 - Resilience at HTTP boundary
   - Retries and delay strategies are applied where transient transport/API failures happen.
 - Extension-by-area model
-  - API capabilities are organized into areas (for example `Spaces`), allowing incremental endpoint growth.
+  - API capabilities are organized into areas (for example `Spaces` and `Tags`), allowing incremental endpoint growth.
 
 ## Integration points
 
