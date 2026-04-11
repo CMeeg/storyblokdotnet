@@ -1,8 +1,23 @@
 {
+	"chat.agentFilesLocations": {
+		".agents/agents": true
+	},
+	"chat.hookFilesLocations": {
+		".agents/hooks": true
+	},
+	"chat.instructionsFilesLocations": {
+		".agents/instructions": true
+	},
+	"chat.promptFilesLocations": {
+		".agents/prompts": true
+	},
+	"chat.subagents.allowInvocationsFromSubagents": true,
 	"chat.tools.terminal.autoApprove": {
 		"dotnet test": true,
 		"dotnet build": true
 	},
 	"chat.useAgentsMdFile": true,
+	"chat.useCustomizationsInParentRepositories": true,
+	"chat.useNestedAgentsMdFiles": true,
 	"dotnet.defaultSolution": "StoryblokDotNet.slnx"
 }

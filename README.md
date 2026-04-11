@@ -70,9 +70,10 @@ The client and feature areas map closely to Storyblok's own API documentation, s
 
 ### Endpoint map
 
-| Area | API client entry point | Operations |
+| Area | API client entry point | Examples |
 | --- | --- | --- |
-| Spaces | `apiClient.Spaces()` | `RetrieveCurrentSpace()` |
+| Spaces | `apiClient.Spaces()` | [docs/spaces.md](docs/spaces.md) |
+| Tags | `apiClient.Tags()` | [docs/tags.md](docs/tags.md) |
 
 ### Regions and Authentication
 

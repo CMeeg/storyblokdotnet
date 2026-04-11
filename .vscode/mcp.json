@@ -1,0 +1,67 @@
+{
+	"servers": {
+		"com.microsoft/nuget": {
+			"type": "stdio",
+			"command": "dnx",
+			"args": [
+				"NuGet.Mcp.Server@1.2.3",
+				"--yes",
+				"--source",
+				"https://api.nuget.org/v3/index.json"
+			]
+		},
+		"io.github.github/github-mcp-server": {
+			"type": "stdio",
+			"command": "docker",
+			"args": [
+				"run",
+				"-i",
+				"--rm",
+				"-e",
+				"GITHUB_PERSONAL_ACCESS_TOKEN=${input:GITHUB_PERSONAL_ACCESS_TOKEN}",
+				"ghcr.io/github/github-mcp-server:0.33.0"
+			]
+		},
+		"io.github.upstash/context7": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"@upstash/context7-mcp@1.0.31"
+			],
+			"env": {
+				"CONTEXT7_API_KEY": "${input:CONTEXT7_API_KEY}"
+			}
+		},
+		"microsoftdocs/mcp": {
+			"type": "http",
+			"url": "https://learn.microsoft.com/api/mcp"
+		},
+		"storyblok": {
+			"type": "http",
+			"url": "https://mcp.labs.storyblok.com/mcp?role=developer",
+			"headers": {
+				"Authorization": "Bearer ${input:STORYBLOK_PERSONAL_ACCESS_TOKEN}"
+			}
+		}
+	},
+	"inputs": [
+		{
+			"id": "CONTEXT7_API_KEY",
+			"type": "promptString",
+			"description": "API key for Context7 MCP",
+			"password": true
+		},
+		{
+			"id": "GITHUB_PERSONAL_ACCESS_TOKEN",
+			"type": "promptString",
+			"description": "PAT for GitHub MCP",
+			"password": true
+		},
+		{
+			"id": "STORYBLOK_PERSONAL_ACCESS_TOKEN",
+			"type": "promptString",
+			"description": "PAT for Storyblok MCP",
+			"password": true
+		}
+	]
+}
