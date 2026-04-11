@@ -11,6 +11,7 @@
 	"chat.promptFilesLocations": {
 		".agents/prompts": true
 	},
+	"chat.subagents.allowInvocationsFromSubagents": true,
 	"chat.tools.terminal.autoApprove": {
 		"dotnet test": true,
 		"dotnet build": true

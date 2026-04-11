@@ -36,13 +36,13 @@
 			"type": "http",
 			"url": "https://learn.microsoft.com/api/mcp"
 		},
-    "storyblok": {
-      "type": "http",
-      "url": "https://mcp.labs.storyblok.com/mcp?role=developer",
-      "headers": {
-        "Authorization": "Bearer ${input:STORYBLOK_PERSONAL_ACCESS_TOKEN}"
-      }
-    }
+		"storyblok": {
+			"type": "http",
+			"url": "https://mcp.labs.storyblok.com/mcp?role=developer",
+			"headers": {
+				"Authorization": "Bearer ${input:STORYBLOK_PERSONAL_ACCESS_TOKEN}"
+			}
+		}
 	},
 	"inputs": [
 		{

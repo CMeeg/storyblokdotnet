@@ -89,7 +89,6 @@ Use this lightweight checklist before opening a PR:
 - Tests pass locally.
 - Changes follow repository style and placement conventions.
 - Documentation is updated when behaviour, configuration, or supported features are changed.
-- If you used an AI agent to complete any part of the work, please include any relevant plans used by the agent under the `.agents/plans/{name-of-feature}` folder. For example, a file named `plan.md`.
 - PR description explains motivation, scope, and any noteworthy tradeoffs.
 
 ## Related documentation
