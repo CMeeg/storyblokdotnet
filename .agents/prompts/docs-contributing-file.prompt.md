@@ -1,8 +1,8 @@
 ---
 name: docs-contributing-file
-description: "Generate or refresh CONTRIBUTING.md for this repository, including setup, build, run, test, style, and contribution workflow."
-argument-hint: "Optional focus (for example: add release process, document CI checks, tighten PR checklist)."
-agent: "agent"
+description: 'Generate or refresh CONTRIBUTING.md for this repository, including setup, build, run, test, style, and contribution workflow.'
+argument-hint: 'Optional focus (for example: add release process, document CI checks, tighten PR checklist).'
+agent: 'agent'
 ---
 
 # Create or update CONTRIBUTING.md for this repository
@@ -69,7 +69,7 @@ agent: "agent"
 
 ## Output format
 
-- Edit or create CONTRIBUTING.md in the workspace root.
+- Edit or create `CONTRIBUTING.md` in the workspace root.
 - Return a concise summary containing:
   - Whether file was created or updated
   - Major sections added or changed

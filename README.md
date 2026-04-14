@@ -72,6 +72,7 @@ The client and feature areas map closely to Storyblok's own API documentation, s
 
 | Area | API client entry point | Examples |
 | --- | --- | --- |
+| Datasources | `apiClient.Datasources()` | [docs/datasources.md](docs/datasources.md) |
 | Spaces | `apiClient.Spaces()` | [docs/spaces.md](docs/spaces.md) |
 | Tags | `apiClient.Tags()` | [docs/tags.md](docs/tags.md) |
 

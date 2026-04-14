@@ -65,7 +65,7 @@ dotnet test
 
 ## Code style and conventions
 
-- Read [ARCHITECTURE.md](ARCHITECTURE.md) for an overview of the project architecture and repository structure.
+- Read [ARCHITECTURE.md](.agents/ARCHITECTURE.md) for an overview of the project architecture and repository structure.
 - For .NET and C# conventions see [dotnet-style.instructions.md](.agents/instructions/dotnet-style.instructions.md).
 
 ## Submitting changes
@@ -84,7 +84,7 @@ Maintainers may squash merge and apply a conventional commit message at merge ti
 
 Use this lightweight checklist before opening a PR:
 
-- Check that the contribution aligns with [product goals](PRODUCT.md) and [architecture guidance](ARCHITECTURE.md).
+- Check that the contribution aligns with [product goals](.agents/PRODUCT.md) and [architecture guidance](.agents/ARCHITECTURE.md).
 - Build succeeds locally.
 - Tests pass locally.
 - Changes follow repository style and placement conventions.

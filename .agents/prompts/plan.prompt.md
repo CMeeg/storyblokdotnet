@@ -1,7 +1,11 @@
 ---
 name: plan-feature
-description: Create a detailed implementation plan for a new feature or addition or extension of an existing feature.
-agent: Architect
+description: 'Create a detailed implementation plan for a new feature or addition or extension of an existing feature.'
+agent: Planner
 ---
 
-Provide any input to the #tool:agent to begin the planning workflow.
+Use the #tool:agent tool to begin the planning workflow.
+
+## Inputs
+
+- User argument from this prompt invocation: {{input}}

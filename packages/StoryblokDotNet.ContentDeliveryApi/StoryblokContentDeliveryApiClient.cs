@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using StoryblokDotNet.ContentDeliveryApi.Caching;
+using StoryblokDotNet.ContentDeliveryApi.Datasources;
 using StoryblokDotNet.ContentDeliveryApi.Http;
 using StoryblokDotNet.ContentDeliveryApi.Spaces;
 using StoryblokDotNet.ContentDeliveryApi.Tags;
@@ -220,6 +221,11 @@ public sealed class StoryblokContentDeliveryApiClient
 	public StoryblokContentDeliveryApiSpaces Spaces()
 	{
 		return new StoryblokContentDeliveryApiSpaces(contentDeliveryHttpClient);
+	}
+
+	public StoryblokContentDeliveryApiDatasources Datasources()
+	{
+		return new StoryblokContentDeliveryApiDatasources(contentDeliveryHttpClient);
 	}
 
 	public StoryblokContentDeliveryApiTags Tags()

@@ -1,9 +1,10 @@
 ---
-title: [Short descriptive title of the feature]
-version: [optional version number]
-date_created: [YYYY-MM-DD]
-last_updated: [YYYY-MM-DD]
+title: '[Short descriptive title of the feature]'
+version: '[optional version number]'
+date_created: '[YYYY-MM-DD]'
+last_updated: '[YYYY-MM-DD]'
 ---
+
 # Implementation plan: <feature>
 
 [Brief description of the requirements and goals of the feature]

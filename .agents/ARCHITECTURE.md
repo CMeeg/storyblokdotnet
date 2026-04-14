@@ -9,11 +9,11 @@ This document explains how the repository is organized, how the main components 
 ## Technology stack
 
 - Language and runtime
-  - C# on modern .NET (see [CONTRIBUTING.md](CONTRIBUTING.md))
+  - C# on modern .NET (see [CONTRIBUTING.md](../CONTRIBUTING.md))
 - Primary package
   - StoryblokDotNet.ContentDeliveryApi (class library)
 - Core dependencies
-  - This project uses centralised package management, please see [Directory.Packages.props](Directory.Packages.props)
+  - This project uses centralised package management, please see [Directory.Packages.props](../Directory.Packages.props)
 - Test stack
   - xUnit v3
 
@@ -134,11 +134,11 @@ Typical flow for retrieving current space:
 
 To add a new endpoint area safely:
 
-1. Add request/query/response models under a dedicated folder in [packages/StoryblokDotNet.ContentDeliveryApi](packages/StoryblokDotNet.ContentDeliveryApi).
+1. Add request/query/response models under a dedicated folder in [packages/StoryblokDotNet.ContentDeliveryApi](../packages/StoryblokDotNet.ContentDeliveryApi).
 2. Add an area facade class similar to Spaces and route methods through `StoryblokContentDeliveryApiHttpClient`.
 3. Expose the new area from `StoryblokContentDeliveryApiClient`.
-4. Add focused tests under matching folder structure in [packages/StoryblokDotNet.ContentDeliveryApi.Tests](packages/StoryblokDotNet.ContentDeliveryApi.Tests).
-5. Document feature usage in [README.md](README.md) and topic docs in [docs](docs).
+4. Add focused tests under matching folder structure in [packages/StoryblokDotNet.ContentDeliveryApi.Tests](../packages/StoryblokDotNet.ContentDeliveryApi.Tests).
+5. Document feature usage in [README.md](../README.md) and topic docs in [docs](../docs).
 
 Conventions to preserve:
 
@@ -150,10 +150,10 @@ Conventions to preserve:
 
 The test package is organized by system-under-test and uses recording HTTP test doubles to make request behavior deterministic and assertable. This keeps tests fast and independent of external Storyblok availability.
 
-Run and contribution workflows are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+Run and contribution workflows are documented in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Related documentation
 
-- Usage and quickstart: [README.md](README.md)
-- Contribution, build, and test instructions: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Feature guides: [docs](docs)
+- Usage and quickstart: [README.md](../README.md)
+- Contribution, build, and test instructions: [CONTRIBUTING.md](../CONTRIBUTING.md)
+- Feature guides: [docs](../docs)

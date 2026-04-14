@@ -1,14 +1,14 @@
 ---
 name: docs-architecture-file
-description: "Generate or refresh ARCHITECTURE.md for this repository, including the repository's structure, components, interactions, and key design decisions without duplicating existing documentation."
-agent: "agent"
+description: 'Generate or refresh ARCHITECTURE.md for this repository, including the repository's structure, components, interactions, and key design decisions without duplicating existing documentation.'
+agent: 'agent'
 ---
 
-# Create or update ARCHITECTURE.md
+# Create or update `ARCHITECTURE.md`
 
 ## Goal
 
-Produce or refresh an ARCHITECTURE.md file that helps developers quickly understand:
+Produce or refresh an `ARCHITECTURE.md` file that helps developers quickly understand:
 - What the system is
 - How it is organized
 - How major parts interact
@@ -73,7 +73,7 @@ Produce or refresh an ARCHITECTURE.md file that helps developers quickly underst
 - Testing strategy and test architecture
 - Known limitations and roadmap notes
 
-## Update mode rules (when ARCHITECTURE.md already exists)
+## Update mode rules (when `ARCHITECTURE.md` already exists)
 
 1. Preserve useful structure and headings where possible.
 2. Refresh only stale or incorrect sections first.
@@ -93,6 +93,7 @@ Produce or refresh an ARCHITECTURE.md file that helps developers quickly underst
 
 ## Output constraints
 
+- Edit or create `ARCHITECTURE.md` under the `.agents` folder in this repository.
 - Output valid Markdown.
 - Keep it concise but complete for onboarding.
 - Use relative links for internal documentation.

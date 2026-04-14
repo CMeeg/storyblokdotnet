@@ -105,7 +105,7 @@ public sealed class StoryblokContentDeliveryApiSpacesTests
 		StoryblokContentDeliveryResult<RetrieveCurrentSpaceResponse> response = await sut.RetrieveCurrentSpace(cacheEntryOptions: cacheOptions, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.True(response.IsSuccess);
-		Assert.Same(cacheOptions, cache.ReceivedOptions);
+		Assert.Same(cacheOptions, cache.CacheCalls.Last().Options);
 	}
 
 	private static HttpResponseMessage CreateJsonResponse()
@@ -126,34 +126,4 @@ public sealed class StoryblokContentDeliveryApiSpacesTests
 		};
 	}
 
-	private sealed class RecordingApiCache : IStoryblokContentDeliveryApiCache
-	{
-		public StoryblokContentDeliveryApiCacheEntryOptions? ReceivedOptions { get; private set; }
-
-		public Task<StoryblokContentDeliveryResult<TResponse>> GetOrCreate<TResponse>(
-			StoryblokRegion region,
-			StoryblokContentDeliveryRequest request,
-			Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
-			StoryblokContentDeliveryApiCacheEntryOptions? options = null,
-			CancellationToken cancellationToken = default)
-		{
-			ReceivedOptions = options;
-			return valueFactory(cancellationToken);
-		}
-
-		public Task Clear(StoryblokRegion region, StoryblokContentDeliveryRequest request, CancellationToken cancellationToken = default)
-		{
-			return Task.CompletedTask;
-		}
-
-		public Task ClearByTag(string tag, CancellationToken cancellationToken = default)
-		{
-			return Task.CompletedTask;
-		}
-
-		public Task ClearAll(CancellationToken cancellationToken = default)
-		{
-			return Task.CompletedTask;
-		}
-	}
 }

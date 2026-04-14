@@ -1,8 +1,8 @@
 ---
 name: docs-product-file
-description: "Generate or refresh PRODUCT.md for this repository, including purpose, goals, current features, roadmap direction, and suggested additional topics"
-argument-hint: "Optional: audience, planning horizon, focus areas, release context"
-agent: "agent"
+description: 'Generate or refresh PRODUCT.md for this repository, including purpose, goals, current features, roadmap direction, and suggested additional topics'
+argument-hint: 'Optional: audience, planning horizon, focus areas, release context'
+agent: 'agent'
 ---
 
 # Create or update `PRODUCT.md` for this repository
@@ -47,7 +47,7 @@ If audience is not specified in prompt arguments:
 
 ## Output
 
-- Return the final markdown content for `PRODUCT.md`.
+- Edit or create `PRODUCT.md` under the `.agents` folder in this repository.
 - Briefly summarize what changed (or what was created).
 
 Use this structure unless a better fit is strongly justified:

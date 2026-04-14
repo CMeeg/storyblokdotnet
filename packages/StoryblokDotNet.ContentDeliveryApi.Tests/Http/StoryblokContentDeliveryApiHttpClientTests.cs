@@ -196,8 +196,8 @@ public sealed class StoryblokContentDeliveryApiHttpClientTests
 		StoryblokContentDeliveryResult<object> response = await client.Get<object>(request, cancellationToken: TestContext.Current.CancellationToken);
 
 		Assert.True(response.IsSuccess);
-		Assert.Equal(2, cache.ReceivedOptions.Count);
-		Assert.Contains(cache.ReceivedOptions, options => options?.Tags.Contains(StoryblokContentDeliveryApiHttpClient.CvCacheTag) == true);
+		Assert.Equal(2, cache.CacheCalls.Count);
+		Assert.Contains(cache.CacheCalls, call => call.Options?.Tags.Contains(StoryblokContentDeliveryApiHttpClient.CvCacheTag) == true);
 	}
 
 	[Fact]
@@ -391,37 +391,6 @@ public sealed class StoryblokContentDeliveryApiHttpClientTests
 		{
 			Content = new StringContent(json, Encoding.UTF8, "application/json"),
 		};
-	}
-
-	private sealed class RecordingApiCache : IStoryblokContentDeliveryApiCache
-	{
-		public List<StoryblokContentDeliveryApiCacheEntryOptions?> ReceivedOptions { get; } = [];
-
-		public async Task<StoryblokContentDeliveryResult<TResponse>> GetOrCreate<TResponse>(
-			StoryblokRegion region,
-			StoryblokContentDeliveryRequest request,
-			Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
-			StoryblokContentDeliveryApiCacheEntryOptions? options = null,
-			CancellationToken cancellationToken = default)
-		{
-			ReceivedOptions.Add(options);
-			return await valueFactory(cancellationToken).ConfigureAwait(false);
-		}
-
-		public Task Clear(StoryblokRegion region, StoryblokContentDeliveryRequest request, CancellationToken cancellationToken = default)
-		{
-			return Task.CompletedTask;
-		}
-
-		public Task ClearByTag(string tag, CancellationToken cancellationToken = default)
-		{
-			return Task.CompletedTask;
-		}
-
-		public Task ClearAll(CancellationToken cancellationToken = default)
-		{
-			return Task.CompletedTask;
-		}
 	}
 
 	private sealed class ParameterPassthroughQuery : StoryblokContentDeliveryQuery

@@ -1,3 +1,4 @@
+.agents/plans/
 .nuget/
 .vs/
 bin/
@@ -10,4 +11,5 @@ obj/
 *.tmp
 *.user
 
+ai-notes.md
 TODO.md

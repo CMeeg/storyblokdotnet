@@ -343,45 +343,6 @@ public sealed class StoryblokContentDeliveryApiClientTests
 		Assert.Equal(1, cache.ClearAllInvocations);
 	}
 
-	private sealed class RecordingApiCache : IStoryblokContentDeliveryApiCache
-	{
-		public StoryblokRegion? ClearedRegion { get; private set; }
-		public StoryblokContentDeliveryRequest? ClearedRequest { get; private set; }
-		public string? ClearedTag { get; private set; }
-		public int ClearAllInvocations { get; private set; }
-
-		public Task<StoryblokContentDeliveryResult<TResponse>> GetOrCreate<TResponse>(
-			StoryblokRegion region,
-			StoryblokContentDeliveryRequest request,
-			Func<CancellationToken, Task<StoryblokContentDeliveryResult<TResponse>>> valueFactory,
-			StoryblokContentDeliveryApiCacheEntryOptions? options = null,
-			CancellationToken cancellationToken = default)
-		{
-			ArgumentNullException.ThrowIfNull(request);
-			ClearedRegion = region;
-			return valueFactory(cancellationToken);
-		}
-
-		public Task Clear(StoryblokRegion region, StoryblokContentDeliveryRequest request, CancellationToken cancellationToken = default)
-		{
-			ClearedRegion = region;
-			ClearedRequest = request;
-			return Task.CompletedTask;
-		}
-
-		public Task ClearByTag(string tag, CancellationToken cancellationToken = default)
-		{
-			ClearedTag = tag;
-			return Task.CompletedTask;
-		}
-
-		public Task ClearAll(CancellationToken cancellationToken = default)
-		{
-			ClearAllInvocations++;
-			return Task.CompletedTask;
-		}
-	}
-
 	private sealed class SharedHttpClientFactory : IHttpClientFactory
 	{
 		private readonly HttpClient sharedHttpClient;
